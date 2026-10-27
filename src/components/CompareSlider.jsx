@@ -3,7 +3,11 @@ import { asset } from '../lib/asset.js'
 import { useReducedMotion } from '../hooks/useReducedMotion.js'
 
 /** Drag-to-compare before/after image. Mouse, touch and keyboard (arrow keys). */
-export default function CompareSlider({ project, demo = false, sizes = '(min-width: 1024px) 70rem, 100vw', className = '', children }) {
+/**
+ * before / after: { src, small?, alt, w, h }
+ * label: what's being compared (used for the accessible name)
+ */
+export default function CompareSlider({ before, after, label, demo = false, onDemoEnd, sizes = '(min-width: 1024px) 40rem, 100vw', className = '', children }) {
   const ref = useRef(null)
   const [pos, setPos] = useState(50)
   const [dragging, setDragging] = useState(false)
@@ -18,6 +22,7 @@ export default function CompareSlider({ project, demo = false, sizes = '(min-wid
   }, [])
 
   const stopDemo = () => {
+    if (!touched.current) onDemoEnd?.()
     touched.current = true
     setTouchedState(true)
     cancelAnimationFrame(demoRaf.current)
@@ -37,6 +42,7 @@ export default function CompareSlider({ project, demo = false, sizes = '(min-wid
       const local = p * (keys.length - 1) - seg
       setPos(keys[seg] + (keys[seg + 1] - keys[seg]) * ease(local))
       if (p < 1 && !touched.current) demoRaf.current = requestAnimationFrame(tick)
+      else if (p >= 1) onDemoEnd?.()
     }
     const id = setTimeout(() => (demoRaf.current = requestAnimationFrame(tick)), 350)
     return () => {
@@ -84,7 +90,7 @@ export default function CompareSlider({ project, demo = false, sizes = '(min-wid
     setDragging(false)
   }
 
-  const srcset = (small, big) => (small ? `${asset(small)} 800w, ${asset(big)} 1600w` : undefined)
+  const srcset = (p) => (p.small ? `${asset(p.small)} 800w, ${asset(p.src)} ${p.w}w` : undefined)
 
   return (
     <div
@@ -97,26 +103,24 @@ export default function CompareSlider({ project, demo = false, sizes = '(min-wid
       onPointerCancel={onPointerUp}
     >
       <img
-        key={project.id + '-b'}
-        src={asset(project.beforeSmall || project.before)}
-        srcSet={srcset(project.beforeSmall, project.before)}
+        src={asset(before.small || before.src)}
+        srcSet={srcset(before)}
         sizes={sizes}
-        alt={project.beforeAlt}
-        width="1600"
-        height="1000"
+        alt={before.alt}
+        width={before.w}
+        height={before.h}
         loading="lazy"
         decoding="async"
         draggable="false"
       />
       <div className="compare-after absolute inset-0">
         <img
-          key={project.id + '-a'}
-            src={asset(project.afterSmall || project.after)}
-          srcSet={srcset(project.afterSmall, project.after)}
+          src={asset(after.small || after.src)}
+          srcSet={srcset(after)}
           sizes={sizes}
-          alt={project.afterAlt}
-          width="1600"
-          height="1000"
+          alt={after.alt}
+          width={after.w}
+          height={after.h}
           loading="lazy"
           decoding="async"
           draggable="false"
@@ -156,7 +160,7 @@ export default function CompareSlider({ project, demo = false, sizes = '(min-wid
           setPos(Number(e.target.value))
         }}
         className="compare-range"
-        aria-label={`Compare before and after: ${project.room}`}
+        aria-label={`Compare before and after: ${label}`}
         aria-valuetext={`${Math.round(100 - pos)}% after image shown`}
       />
     </div>

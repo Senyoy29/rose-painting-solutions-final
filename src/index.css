@@ -231,7 +231,7 @@
   transform: none;
   transition: opacity 0.9s ease 0.15s, transform 1.5s var(--ease-out-soft) 0.1s;
 }
-.is-revealed .arch-depth img, .is-revealed .arch-depth canvas { animation: room-settle 1.4s var(--ease-out-soft) both; }
+.is-revealed .arch-depth img:not(.room-drift), .is-revealed .arch-depth canvas { animation: room-settle 1.4s var(--ease-out-soft) both; }
 @keyframes room-settle { from { scale: 1.16; } to { scale: 1; } }
 
 .room-toggle {
@@ -338,6 +338,120 @@
   transition: opacity 0.4s;
 }
 .grip-hint.is-gone { opacity: 0; }
+
+/* ── Real before & after ─────────────────────────────────── */
+.ba-stage { isolation: isolate; }
+.ba-wrap { width: min(100%, calc(80svh * 0.75), 34rem); }
+.compare.ba-photo { aspect-ratio: 3 / 4; width: 100%; }
+/* An arched trim line set just behind the photo — the same doorway motif as the hero */
+.ba-frame {
+  position: absolute;
+  z-index: -1;
+  inset: -16px -16px 28px 28px;
+  translate: 12px -12px;
+  border: 1.5px solid rgb(191 211 247 / 0.45);
+  border-radius: 999px 999px 22px 22px;
+  pointer-events: none;
+}
+.view-switch {
+  display: inline-flex;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.1);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.2);
+}
+.view-switch button {
+  min-height: 2.75rem;
+  padding-inline: 1.15rem;
+  border-radius: 999px;
+  font-weight: 650;
+  font-size: 0.95rem;
+  color: rgb(255 255 255 / 0.85);
+  transition: background 0.4s var(--ease-out-soft), color 0.4s;
+}
+.view-switch button[aria-pressed='true'] { background: #fff; color: var(--color-ink); }
+
+/* ── Our Work exhibition wall ─────────────────────────────── */
+.work-wall { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.9rem; align-items: start; }
+.work-col { display: grid; gap: 1.6rem; }
+.work-wall.is-hung { grid-template-columns: 5fr 4fr 3fr; gap: 1.75rem; }
+.work-wall.is-hung .work-col { gap: 2.4rem; }
+.work-wall.is-hung .work-col:nth-child(2) { margin-top: 5.5rem; }
+.work-wall.is-hung .work-col:nth-child(3) { margin-top: 2rem; }
+@media (max-width: 1023px) { .work-col:nth-child(2) { margin-top: 3rem; } }
+.work-tile .paint-in { transition-delay: var(--d, 0ms); }
+.work-caption {
+  position: absolute;
+  inset: auto 0 0 0;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 3.5rem 1.1rem 1rem;
+  color: #fff;
+  background: linear-gradient(to top, rgb(13 31 77 / 0.88), rgb(13 31 77 / 0));
+  -webkit-mask: var(--brush-mask) 100% 0 / 320% 100% no-repeat;
+  mask: var(--brush-mask) 100% 0 / 320% 100% no-repeat;
+  transition: -webkit-mask-position 0.8s var(--ease-brush), mask-position 0.8s var(--ease-brush);
+}
+.group:hover .work-caption, .group:focus-visible .work-caption { -webkit-mask-position: 0 0; mask-position: 0 0; }
+@media (hover: none) { .work-caption { display: none; } }
+
+.work-cta { padding: 2rem 0 0; border-top: 3px solid var(--color-cobalt); max-width: 26rem; }
+
+/* ── Lightbox ─────────────────────────────────────────────── */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  background: rgb(8 18 46 / 0.94);
+  backdrop-filter: blur(10px);
+  animation: lb-in 0.45s var(--ease-out-soft) both;
+}
+@keyframes lb-in { from { opacity: 0; } }
+.lightbox-top { display: flex; align-items: center; justify-content: space-between; }
+.lightbox-figure { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 0; padding: 0.5rem 0 1rem; }
+.lightbox-img {
+  max-width: min(100%, 72rem);
+  max-height: calc(100svh - 10rem);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 40px 100px -40px rgb(0 0 0 / 0.8);
+  animation: lb-img 0.6s var(--ease-out-soft) both;
+}
+@keyframes lb-img { from { opacity: 0; transform: translateX(var(--from, 0)) scale(0.985); } }
+.lightbox-btn {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 999px;
+  color: #fff;
+  background: rgb(255 255 255 / 0.1);
+  box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 0.3);
+  transition: background 0.3s, color 0.3s;
+}
+.lightbox-btn:hover { background: #fff; color: var(--color-ink); }
+.lightbox :focus-visible { outline-color: #fff; }
+.lightbox-prev, .lightbox-next { position: absolute; top: 50%; translate: 0 -50%; }
+.lightbox-prev { left: max(1rem, env(safe-area-inset-left)); }
+.lightbox-next { right: max(1rem, env(safe-area-inset-right)); }
+@media (max-width: 640px) {
+  .lightbox-prev, .lightbox-next { top: auto; bottom: max(1rem, env(safe-area-inset-bottom)); translate: none; }
+  .lightbox-img { max-height: calc(100svh - 12rem); }
+}
+
+/* Slow drift on the hero photo once it's painted in */
+.room-drift { animation: room-drift 22s ease-in-out infinite alternate; }
+@keyframes room-drift {
+  from { transform: none; }
+  to { transform: scale(1.09) translate3d(-1.5%, -1.2%, 0); }
+}
 
 /* Soft light that follows the pointer across the hero wall (desktop only). */
 .pointer-light {
@@ -599,6 +713,9 @@
     transition-delay: 0ms !important;
   }
   .window-light { display: none; }
+  .room-drift { animation: none; }
+  .work-caption { -webkit-mask: none; mask: none; opacity: 0; }
+  .group:hover .work-caption, .group:focus-visible .work-caption { opacity: 1; }
   .paint-mask, .paint-in { -webkit-mask: none; mask: none; }
   .paint-mask:not(.is-shown) { opacity: 0; }
   .hero-room, .hdr-item { opacity: 1; transform: none; }

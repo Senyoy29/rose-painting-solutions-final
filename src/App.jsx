@@ -7,6 +7,7 @@ import Hero from './components/Hero.jsx'
 import About from './components/About.jsx'
 import Services from './components/Services.jsx'
 import BeforeAfter from './components/BeforeAfter.jsx'
+import OurWork from './components/OurWork.jsx'
 import Trust from './components/Trust.jsx'
 import Process from './components/Process.jsx'
 import Faq from './components/Faq.jsx'
@@ -83,8 +84,9 @@ export default function App() {
       <main id="main" inert={introOn}>
         <Hero key={runId} revealed={revealed} />
         <About />
-        <Services />
         <BeforeAfter />
+        <OurWork />
+        <Services />
         <Trust />
         <Process />
         <Faq />

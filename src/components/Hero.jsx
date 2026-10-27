@@ -1,12 +1,11 @@
 import { useEffect, useRef } from 'react'
 import { business } from '../data/site.js'
-import { projects } from '../data/projects.js'
+import { heroPhoto } from '../data/portfolio.js'
 import { useReducedMotion } from '../hooks/useReducedMotion.js'
 import { PhoneIcon } from './Icons.jsx'
 import BrushEdge from './BrushEdge.jsx'
 import HeroRoom from './HeroRoom.jsx'
 
-const feature = projects[0]
 
 export default function Hero({ revealed }) {
   const reduced = useReducedMotion()
@@ -111,7 +110,7 @@ export default function Hero({ revealed }) {
               Get a quote
             </a>
             <a href="#work" className="btn btn-ghost">
-              See our transformations
+              View our work
             </a>
           </div>
 
@@ -124,7 +123,7 @@ export default function Hero({ revealed }) {
               <PhoneIcon />
             </span>
             <span className="flex flex-col">
-              <span className="text-[0.9rem] text-white/90">Call {business.hours.daysShort}, 9–5</span>
+              <span className="text-[0.9rem] text-white/90">Call now, {business.hours.daysShort} 9–5</span>
               <span className="font-display text-[1.9rem] leading-none tracking-[-0.01em]">{business.phoneDisplay}</span>
             </span>
           </a>
@@ -134,7 +133,7 @@ export default function Hero({ revealed }) {
         <div className="hero-room relative h-[min(118vw,36rem)] sm:h-[38rem] lg:h-auto lg:self-stretch lg:pt-28">
           <span aria-hidden="true" className="arch-trim" />
           <div className="arch-stage relative h-full">
-            <HeroRoom project={feature} start={revealed} reduced={reduced} />
+            <HeroRoom photo={heroPhoto} start={revealed} reduced={reduced} />
           </div>
         </div>
       </div>

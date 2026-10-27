@@ -1,68 +1,36 @@
 // ─────────────────────────────────────────────────────────────
-// Before & after projects.
+// Confirmed before & after projects (real photos only).
 //
-// To use your own photos:
-//   1. Put them in  public/images/rose-painting/
-//   2. Change the file names below (keep before + after the same framing).
-//   3. Delete the `sample: true` line — it shows a "Sample illustration" note.
-//   4. Optional: add a smaller ~800px-wide copy as `beforeSmall` / `afterSmall`
-//      for faster loading on phones. If you don't have one, delete those lines.
+// Only add a project here when you have confirmed that both photos
+// show the same space and which one came first. Everything else
+// belongs in portfolio.js.
 //
-// Paths are relative to the public folder, without a leading slash.
+// Paths are relative to /public. `small` versions (~800px) are used
+// on phones; the full files on larger screens.
 // ─────────────────────────────────────────────────────────────
-const dir = 'images/rose-painting/'
+const dir = 'images/rose-painting/real-work/'
 
-export const projects = [
+export const transformations = [
   {
-    sample: true,
-    id: 'living-room',
-    room: 'Living room',
-    title: 'From tired beige to a calm, bright living room',
-    work: 'Patched nail holes, removed tape marks, primed and repainted walls and trim, plus a deep blue feature wall.',
-    before: dir + 'living-room-before.webp',
-    after: dir + 'living-room-after.webp',
-    beforeSmall: dir + 'living-room-before-800.webp',
-    afterSmall: dir + 'living-room-after-800.webp',
-    beforeAlt: 'Living room before painting: yellowed beige walls with scuffs and patchy marks',
-    afterAlt: 'Living room after painting: clean white walls with a deep blue feature wall behind the sofa',
-  },
-  {
-    sample: true,
-    id: 'bedroom',
-    room: 'Bedroom',
-    title: 'Peeling olive walls restored to a soft sky blue',
-    work: 'Scraped and sanded flaking paint, filled and primed, then two coats of pale blue with a bright white ceiling.',
-    before: dir + 'bedroom-before.webp',
-    after: dir + 'bedroom-after.webp',
-    beforeSmall: dir + 'bedroom-before-800.webp',
-    afterSmall: dir + 'bedroom-after-800.webp',
-    beforeAlt: 'Bedroom before: dark olive walls with paint peeling near the ceiling',
-    afterAlt: 'Bedroom after: smooth pale sky-blue walls and a bright white ceiling',
-  },
-  {
-    sample: true,
-    id: 'dining-room',
-    room: 'Dining room',
-    title: 'Water stains and cracks gone for good',
-    work: 'Sealed a ceiling water stain, repaired hairline plaster cracks and refinished walls with a blue-grey lower wall.',
-    before: dir + 'dining-room-before.webp',
-    after: dir + 'dining-room-after.webp',
-    beforeSmall: dir + 'dining-room-before-800.webp',
-    afterSmall: dir + 'dining-room-after-800.webp',
-    beforeAlt: 'Dining room before: water-stained ceiling and cracked, faded walls',
-    afterAlt: 'Dining room after: crisp white walls, smooth ceiling and a blue-grey lower wall',
-  },
-  {
-    sample: true,
-    id: 'hallway',
-    room: 'Hallway',
-    title: 'A busy hallway that finally looks cared for',
-    work: 'Cleaned and repaired scuffed walls, filled chipped trim and finished doors and frames in durable gloss white.',
-    before: dir + 'hallway-before.webp',
-    after: dir + 'hallway-after.webp',
-    beforeSmall: dir + 'hallway-before-800.webp',
-    afterSmall: dir + 'hallway-after-800.webp',
-    beforeAlt: 'Hallway before: scuffed walls, handprints and chipped trim',
-    afterAlt: 'Hallway after: light blue-grey walls with fresh gloss white doors and trim',
+    id: 'bathroom-vanity',
+    room: 'Bathroom',
+    title: 'Bathroom vanity wall',
+    // Confirmed by the owner: photo 10 (IMG_0325) is before, photo 11 (IMG_0326) is after.
+    before: {
+      src: dir + '10-bathroom-vanity-plain-wall.webp',
+      small: dir + '10-bathroom-vanity-plain-wall-800.webp',
+      w: 1170,
+      h: 1556,
+      alt: 'Before: bathroom double vanity with plain white walls and a large mirror, with paint, cleaning supplies and tools on the counter',
+    },
+    after: {
+      src: dir + '11-bathroom-vanity-patterned-wall.webp',
+      small: dir + '11-bathroom-vanity-patterned-wall-800.webp',
+      w: 1170,
+      h: 1552,
+      alt: 'After: the same bathroom double vanity with a patterned wall covering behind and around the mirror',
+    },
+    // Shown next to the comparison so the presentation stays honest.
+    note: 'Both photos show the same vanity. They were taken from different angles, so details won’t line up exactly in the slider.',
   },
 ]

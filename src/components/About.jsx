@@ -1,9 +1,10 @@
-import { projects } from '../data/projects.js'
+import { portfolio } from '../data/portfolio.js'
 import { asset } from '../lib/asset.js'
 import { useInView } from '../hooks/useInView.js'
 import RevealHeading from './RevealHeading.jsx'
 
-const pic = projects[2]
+// A real project photo (bright room with a double window)
+const pic = portfolio.find((p) => p.id === '03') || portfolio[0]
 
 export default function About() {
   const [ref, inView] = useInView({ threshold: 0.3 })
@@ -39,23 +40,24 @@ export default function About() {
           </dl>
         </div>
 
-        <div ref={ref} className="relative">
+        <div ref={ref} className="relative mx-auto w-full max-w-[26rem] lg:max-w-[28rem]">
           <div className="absolute -inset-4 -z-0 rotate-[-2.5deg] rounded-[28px] bg-sky/60" aria-hidden="true" />
           <div className={`paint-in relative overflow-hidden rounded-[22px] shadow-[0_40px_80px_-40px_rgb(13_31_77/0.6)] ${inView ? 'is-in' : ''}`}>
             <img
-              src={asset(pic.afterSmall)}
-              srcSet={`${asset(pic.afterSmall)} 800w, ${asset(pic.after)} 1600w`}
-              sizes="(min-width: 1024px) 34rem, 92vw"
-              alt={pic.afterAlt}
-              width="1600"
-              height="1000"
+              src={asset(pic.small)}
+              srcSet={`${asset(pic.small)} 800w, ${asset(pic.src)} ${pic.w}w`}
+              sizes="(min-width: 1024px) 28rem, 90vw"
+              alt={pic.alt}
+              width={pic.w}
+              height={pic.h}
+              style={{ background: pic.tone }}
               loading="lazy"
               decoding="async"
-              className="aspect-[4/3] w-full object-cover"
+              className="aspect-[3/4] w-full object-cover"
             />
           </div>
           <span className="tape -bottom-3 right-8" style={{ '--tape-rot': '-2deg' }}>
-            Finished: {pic.room.toLowerCase()}
+            A finished project
           </span>
         </div>
       </div>
