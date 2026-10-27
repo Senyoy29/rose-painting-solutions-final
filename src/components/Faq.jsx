@@ -4,10 +4,10 @@ import { business } from '../data/site.js'
 import RevealHeading from './RevealHeading.jsx'
 
 export default function Faq() {
-  const [open, setOpen] = useState(0)
+  const [open, setOpen] = useState(-1)
   const uid = useId()
   return (
-    <section id="faq" aria-labelledby="faq-title" className="bg-primer py-24 md:py-32">
+    <section id="faq" aria-labelledby="faq-title" className="bg-primer py-16 md:py-20">
       <div className="shell grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
         <div>
           <RevealHeading id="faq-title" className="t-h2 max-w-[11ch] text-ink">
@@ -35,7 +35,7 @@ export default function Faq() {
                     aria-expanded={isOpen}
                     aria-controls={`${id}-panel`}
                     onClick={() => setOpen(isOpen ? -1 : i)}
-                    className="group flex w-full items-center justify-between gap-6 py-6 text-left font-sans text-[1.15rem] font-semibold text-ink transition-colors hover:text-cobalt md:text-[1.25rem]"
+                    className="group flex w-full items-center justify-between gap-6 py-5 text-left font-sans text-[1.1rem] font-semibold text-ink transition-colors hover:text-cobalt md:text-[1.25rem]"
                   >
                     {f.q}
                     <span

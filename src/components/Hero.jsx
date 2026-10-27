@@ -1,35 +1,36 @@
 import { useEffect, useRef } from 'react'
 import { business } from '../data/site.js'
-import { heroPhoto } from '../data/portfolio.js'
+import { heroHouse } from '../data/generated.js'
+import { asset } from '../lib/asset.js'
 import { useReducedMotion } from '../hooks/useReducedMotion.js'
 import { PhoneIcon } from './Icons.jsx'
 import BrushEdge from './BrushEdge.jsx'
-import HeroRoom from './HeroRoom.jsx'
 
-
+/**
+ * "A fresh perspective" — a full-bleed architectural photograph that the
+ * opening brush paints into view. Once revealed, the camera eases forward,
+ * the headline rises and the calls to action settle in.
+ * The house is an illustrative AI image (see data/generated.js), so the copy
+ * talks about rooms and a caption says so.
+ */
 export default function Hero({ revealed }) {
   const reduced = useReducedMotion()
-  const sectionRef = useRef(null)
+  const ref = useRef(null)
 
-  // Depth: scroll parallax for the room and type, pointer light + tilt on desktop.
+  // Scroll parallax + a whisper of pointer depth on desktop.
   useEffect(() => {
-    const el = sectionRef.current
+    const el = ref.current
     if (!el || reduced) return
     const fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches
     let raf = 0
     let pointer = null
     const apply = () => {
       raf = 0
-      const y = Math.min(window.scrollY, window.innerHeight * 1.2)
-      el.style.setProperty('--scroll', `${y}px`)
+      el.style.setProperty('--scroll', `${Math.min(window.scrollY, window.innerHeight * 1.2)}px`)
       if (pointer) {
         const r = el.getBoundingClientRect()
-        const x = (pointer.clientX - r.left) / r.width
-        const yy = (pointer.clientY - r.top) / r.height
-        el.style.setProperty('--mx', `${(x * 100).toFixed(1)}%`)
-        el.style.setProperty('--my', `${(yy * 100).toFixed(1)}%`)
-        el.style.setProperty('--px', (x - 0.5).toFixed(3))
-        el.style.setProperty('--py', (yy - 0.5).toFixed(3))
+        el.style.setProperty('--px', ((pointer.clientX - r.left) / r.width - 0.5).toFixed(3))
+        el.style.setProperty('--py', ((pointer.clientY - r.top) / r.height - 0.5).toFixed(3))
       }
     }
     const queue = () => {
@@ -39,105 +40,81 @@ export default function Hero({ revealed }) {
       pointer = e
       queue()
     }
-    const onLeave = () => {
-      pointer = null
-      el.style.setProperty('--px', 0)
-      el.style.setProperty('--py', 0)
-    }
     window.addEventListener('scroll', queue, { passive: true })
-    if (fine) {
-      el.addEventListener('pointermove', onMove, { passive: true })
-      el.addEventListener('pointerleave', onLeave)
-    }
+    if (fine) el.addEventListener('pointermove', onMove, { passive: true })
     apply()
     return () => {
       cancelAnimationFrame(raf)
       window.removeEventListener('scroll', queue)
       el.removeEventListener('pointermove', onMove)
-      el.removeEventListener('pointerleave', onLeave)
     }
   }, [reduced])
 
   return (
     <section
-      ref={sectionRef}
+      ref={ref}
       id="top"
       aria-labelledby="hero-title"
-      className={`hero wall relative isolate overflow-hidden text-white ${revealed ? 'is-revealed' : ''}`}
+      className={`hero3 relative isolate flex min-h-[100svh] flex-col overflow-hidden bg-midnight text-white ${revealed ? 'is-revealed' : ''}`}
     >
-      <div className="wall-texture" aria-hidden="true" />
-      <div className="window-light" aria-hidden="true" />
-      <div className="pointer-light" aria-hidden="true" />
+      {/* The photograph */}
+      <div className="hero3-photo" aria-hidden="false">
+        <picture>
+          <source media="(max-width: 767px)" srcSet={asset(heroHouse.small)} />
+          <img
+            src={asset(heroHouse.mid)}
+            srcSet={`${asset(heroHouse.mid)} 1600w, ${asset(heroHouse.src)} ${heroHouse.w}w`}
+            sizes="100vw"
+            alt={heroHouse.alt}
+            width={heroHouse.w}
+            height={heroHouse.h}
+            fetchPriority="high"
+            decoding="async"
+          />
+        </picture>
+      </div>
+      <div className="hero3-shade" aria-hidden="true" />
+      {/* An architectural mat line that frames the photograph */}
+      <span className="hero3-frame" aria-hidden="true" />
 
-      {/* Architectural lines: a picture rail and a vertical door trim */}
-      <span aria-hidden="true" className="hero-rail" />
-
-      <div className="shell relative z-10 grid gap-12 pt-28 lg:min-h-[100svh] lg:grid-cols-[1.12fr_0.88fr] lg:gap-6 lg:pt-0">
-        <div className="hero-copy flex flex-col justify-center lg:py-28">
-          <h1 id="hero-title" tabIndex={-1} className="hero-title outline-none">
-            <span className="line-mask hero-l1" style={{ '--i': 0 }}>
-              <span>Every room deserves</span>
+      <div className="shell relative z-10 mt-auto grid gap-10 pt-36 pb-[clamp(5rem,9vw,8rem)] lg:grid-cols-[1fr_auto] lg:items-end">
+        <div>
+          <h1 id="hero-title" tabIndex={-1} className="hero3-title outline-none">
+            <span className="line-mask" style={{ '--i': 0 }}>
+              <span>A fresh perspective,</span>
             </span>
-            <span className="line-mask hero-l2" style={{ '--i': 1 }}>
-              <span>
-                <span className="relative inline-block">
-                  <svg className="hero-stroke" viewBox="0 0 600 120" preserveAspectRatio="none" aria-hidden="true">
-                    <path
-                      d="M14 78 C 120 52 260 50 380 58 S 560 70 588 54"
-                      pathLength="1"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="46"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <span className="relative">a second</span>
-                </span>
-              </span>
-            </span>
-            <span className="line-mask hero-l3" style={{ '--i': 2 }}>
-              <span>first impression.</span>
+            <span className="line-mask" style={{ '--i': 1 }}>
+              <span>room by room.</span>
             </span>
           </h1>
-
-          <p className="rise t-lede mt-8 max-w-[31rem] text-white/90" style={{ '--i': 0 }}>
-            We paint and restore interior rooms with careful prep, clean lines and a finish you’ll notice every time
-            you walk in.
+          <p className="rise t-lede mt-6 max-w-[34rem] text-white/90" style={{ '--i': 0 }}>
+            Rose Painting Solutions transforms interior spaces with careful preparation, quality finishes and real
+            attention to detail.
           </p>
-
-          <div className="rise mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center" style={{ '--i': 1 }}>
+          <div className="rise mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap" style={{ '--i': 1 }}>
             <a href="#contact" className="btn btn-light">
               Get a quote
             </a>
             <a href="#work" className="btn btn-ghost">
-              View our work
+              Explore our work
             </a>
           </div>
-
-          <a
-            href={business.phoneHref}
-            className="rise hero-phone group mt-8 inline-flex items-center gap-4 self-start rounded-2xl py-1"
-            style={{ '--i': 2 }}
-          >
-            <span className="grid size-12 place-items-center rounded-full bg-white/12 ring-1 ring-white/30 transition group-hover:bg-white group-hover:text-cobalt">
-              <PhoneIcon />
-            </span>
-            <span className="flex flex-col">
-              <span className="text-[0.9rem] text-white/90">Call now, {business.hours.daysShort} 9–5</span>
-              <span className="font-display text-[1.9rem] leading-none tracking-[-0.01em]">{business.phoneDisplay}</span>
-            </span>
-          </a>
         </div>
 
-        {/* The room */}
-        <div className="hero-room relative h-[min(118vw,36rem)] sm:h-[38rem] lg:h-auto lg:self-stretch lg:pt-28">
-          <span aria-hidden="true" className="arch-trim" />
-          <div className="arch-stage relative h-full">
-            <HeroRoom photo={heroPhoto} start={revealed} reduced={reduced} />
-          </div>
-        </div>
+        <a href={business.phoneHref} className="rise hero3-call group" style={{ '--i': 2 }}>
+          <span className="grid size-12 shrink-0 place-items-center rounded-full bg-white text-cobalt transition group-hover:bg-cobalt group-hover:text-white">
+            <PhoneIcon />
+          </span>
+          <span className="flex flex-col">
+            <span className="text-[0.9rem] text-white/85">
+              Call {business.hours.daysShort}, 9 AM–5 PM
+            </span>
+            <span className="font-display text-[2rem] leading-none tracking-[-0.01em]">{business.phoneDisplay}</span>
+          </span>
+        </a>
       </div>
 
+      <p className="hero3-caption">Illustrative image</p>
       <BrushEdge className="absolute inset-x-0 -bottom-px z-20 text-primer" />
     </section>
   )

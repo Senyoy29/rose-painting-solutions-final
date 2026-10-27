@@ -1,6 +1,6 @@
 # Rose Painting Solutions — website
 
-A fast, single-page site for Rose Painting Solutions. It opens with “The First Stroke”: the paintbrush logo comes to life and paints the homepage in. The brush then paints a real project photo into the hero's arched doorway. Below that are a real before & after, an “Our Work” exhibition of project photos with a full-screen viewer, then services, process, FAQ and a quote form.
+A fast, single-page site for Rose Painting Solutions in five sections. It opens with “The First Stroke”, where the paintbrush logo paints the homepage's house photograph into view. Then come services and why choose us, real work (the bathroom before & after plus five finished rooms), “Imagine the possibilities” (AI concept interiors, clearly labelled), and an FAQ plus contact.
 
 Built with **React 19 + Vite + Tailwind CSS v4**. Animation is hand-built (canvas + CSS + Web Animations) rather than a motion library, so the whole site ships about 78 KB of gzipped JavaScript and has no runtime animation dependencies.
 
@@ -27,22 +27,30 @@ All real photos live in **`public/images/rose-painting/real-work/`**. Each one h
 
 ### Before & after (`src/data/projects.js`)
 
-This file holds **confirmed** pairs only. Right now it has one: the bathroom vanity, with photo 10 (`IMG_0325`) as before and photo 11 (`IMG_0326`) as after, as confirmed by you. The section shows a drag slider and a side-by-side view. It also includes a note that the two photos were taken from different angles, because they don't line up exactly.
+This file holds **confirmed** pairs only. Right now it has one: the bathroom vanity, with photo 11 (`IMG_0326`) as before and photo 10 (`IMG_0325`) as after, as confirmed by you. The section shows a drag slider and a side-by-side view. It also includes a note that the two photos were taken from different angles, because they don't line up exactly.
 
 To add another pair, add a block with a `before` and `after` photo. The section shows the first pair; ask if you'd like a project switcher once you have more than one. Tips:
 
 - Take both photos from the same spot, at the same height and zoom, so the slider lines up.
 - Never add a pair you haven't confirmed. Other photos belong in the portfolio.
 
-### Our Work gallery (`src/data/portfolio.js`)
+### Finished rooms (`src/data/portfolio.js`)
 
-Five photos of finished projects: photos 01–05. Captions and alt text describe what's visible in each photo. To add one:
+Five photos of finished projects: photos 01–05. They're shown as a filmstrip under the before & after, with a full-screen viewer. To add one, put `13-my-photo.webp` and an 800px-wide `13-my-photo-800.webp` in the `real-work` folder, then add a `photo(...)` line.
 
-1. Put `13-my-photo.webp` and `13-my-photo-800.webp` (800px wide) in the `real-work` folder.
-2. Add a `photo(...)` line in `portfolio.js` with the pixel size, a short caption and alt text.
-3. Optionally place it in the `hang` list, which sets the desktop column order. Photos not listed there are added automatically.
+### AI-generated images (`src/data/generated.js`)
 
-Photos keep their real proportions, so portrait and landscape shots both work. The hero arch uses the first photo in the list (`heroPhoto`). The About section uses photo 03.
+These five images were made with Higgsfield (Nano Banana Pro, 2K) and live in `public/images/rose-painting/generated/`:
+
+| File | Used for |
+| --- | --- |
+| `house-hero-2400.webp`, `house-hero-1600.webp`, `house-hero-mobile.webp` | Homepage hero, labelled "Illustrative image" |
+| `concept-living-room*.webp` | Imagine the possibilities |
+| `concept-bedroom*.webp` | Imagine the possibilities |
+| `concept-kitchen*.webp` | Imagine the possibilities |
+| `concept-bathroom*.webp` | Imagine the possibilities |
+
+**They are not Rose Painting Solutions projects.** Each is tagged "AI concept", and the section says so. Keep them out of `projects.js` and `portfolio.js`. The house is illustrative only; the site doesn't claim exterior work.
 
 ### Making `-800` copies
 
@@ -104,16 +112,15 @@ src/
     Intro.jsx             “The First Stroke” opening sequence
     Brush.jsx             the rendered brush (shares geometry with the logo)
     Logo.jsx              logo lockups + BrushMark
-    Hero.jsx              art-directed headline, depth/parallax
-    HeroRoom.jsx          arch doorway where the brush paints a real photo in
-    BeforeAfter.jsx       the confirmed real before & after (slider / side by side)
-    OurWork.jsx           exhibition wall of project photos
+    Hero.jsx              full-bleed house photograph, camera push, parallax
+    ServicesWhy.jsx       services as a paint-swatch fan + four promises
+    RealWork.jsx          bathroom before & after + finished-rooms filmstrip
+    Possibilities.jsx     AI concept interiors (clearly labelled)
     Lightbox.jsx          full-screen photo viewer (keyboard, swipe)
     RevealHeading.jsx     headings that rise in as they scroll into view
-    Services.jsx          paint-chip service cards
     CompareSlider.jsx     draggable comparison (mouse, touch, keyboard)
-    Trust.jsx, Process.jsx, Faq.jsx, Contact.jsx, ContactForm.jsx, Footer.jsx
-    Header.jsx, MobileCallBar.jsx, Logo.jsx, BrushEdge.jsx, Icons.jsx
+    Faq.jsx, Contact.jsx, ContactForm.jsx, Footer.jsx
+    Header.jsx, MobileCallBar.jsx, BrushEdge.jsx, Icons.jsx
 ```
 
 **Brand identity.** The paintbrush logo and the brush in the intro share exactly the same shapes (`src/lib/brushGeometry.js`), so the brand mark *is* the brush that paints the site. `src/components/Logo.jsx` provides:

@@ -4,12 +4,9 @@ import { useReducedMotion } from './hooks/useReducedMotion.js'
 import { lockScroll } from './lib/scrollLock.js'
 import Header from './components/Header.jsx'
 import Hero from './components/Hero.jsx'
-import About from './components/About.jsx'
-import Services from './components/Services.jsx'
-import BeforeAfter from './components/BeforeAfter.jsx'
-import OurWork from './components/OurWork.jsx'
-import Trust from './components/Trust.jsx'
-import Process from './components/Process.jsx'
+import ServicesWhy from './components/ServicesWhy.jsx'
+import RealWork from './components/RealWork.jsx'
+import Possibilities from './components/Possibilities.jsx'
 import Faq from './components/Faq.jsx'
 import Contact from './components/Contact.jsx'
 import Footer from './components/Footer.jsx'
@@ -83,12 +80,9 @@ export default function App() {
       <Header revealed={revealed} inert={introOn} />
       <main id="main" inert={introOn}>
         <Hero key={runId} revealed={revealed} />
-        <About />
-        <BeforeAfter />
-        <OurWork />
-        <Services />
-        <Trust />
-        <Process />
+        <ServicesWhy />
+        <RealWork />
+        <Possibilities />
         <Faq />
         <Contact />
       </main>

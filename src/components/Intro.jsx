@@ -324,16 +324,24 @@ export default function Intro({ onReveal, onDone }) {
       raf = requestAnimationFrame(frame)
     }
 
+    let started = false
+    const startLoop = () => {
+      if (started || cancelled) return
+      started = true
+      raf = requestAnimationFrame(frame)
+    }
+
     skipRef.current = () => {
       if (skipping || finished) return
       skipping = true
-      const t = performance.now() - (t0 || performance.now())
-      finalStart = t
-      finalDur = 480
+      // If the loop hasn't started yet (still waiting on fonts), sweep from t = 0 right now.
+      finalStart = t0 ? performance.now() - t0 : 0
+      finalDur = 420
       // a wider brush so one quick pass clears everything
       const fin = sc.strokes[2]
       const base = fin.band
       fin.band = (e) => base(e) * 1.6
+      startLoop()
     }
 
     // Give the display font a moment so the wordmark renders in Gloock.
@@ -344,9 +352,7 @@ export default function Intro({ onReveal, onDone }) {
         ])
       : Promise.resolve()
     drawCover(0)
-    fontWait.finally(() => {
-      if (!cancelled) raf = requestAnimationFrame(frame)
-    })
+    fontWait.finally(startLoop)
 
     const onKey = (e) => e.key === 'Escape' && skipRef.current()
     window.addEventListener('keydown', onKey)

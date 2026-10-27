@@ -17,7 +17,7 @@ export default function Contact() {
     <section id="contact" aria-labelledby="contact-title" className="wall relative isolate overflow-hidden text-white">
       <BrushEdge flip className="relative z-10 -mt-px text-primer" />
       <div className="wall-texture" aria-hidden="true" />
-      <div className="shell relative z-10 grid gap-14 pt-16 pb-24 md:pb-32 lg:grid-cols-[0.95fr_1.05fr] lg:gap-16 lg:pt-20">
+      <div className="shell relative z-10 grid gap-12 pt-12 pb-20 md:pb-24 lg:grid-cols-[0.95fr_1.05fr] lg:gap-16 lg:pt-16">
         <div>
           <RevealHeading id="contact-title" className="t-h2 max-w-[12ch]">
             Let’s talk about your room.

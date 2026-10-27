@@ -34,13 +34,3 @@ export const portfolio = [
   photo('04', 'light-bathroom-tub', 1170, 1556, '#887868', 'Finished bathroom', 'Bathroom with a corner tub',
     'Finished bathroom seen through an open door: light walls, a vanity with mirror, tiled floor and a corner bathtub'),
 ]
-
-// Desktop hang: three columns of different widths (5 : 4 : 3).
-export const hang = [
-  ['02'],
-  ['05', '04'],
-  ['01', '03'],
-]
-
-// The hero arch uses this photo.
-export const heroPhoto = portfolio[0]

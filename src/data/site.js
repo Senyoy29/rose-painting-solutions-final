@@ -19,10 +19,9 @@ export const business = {
 }
 
 export const nav = [
-  { label: 'Before & after', href: '#before-after' },
-  { label: 'Our work', href: '#work' },
   { label: 'Services', href: '#services' },
-  { label: 'Process', href: '#process' },
+  { label: 'Our work', href: '#work' },
+  { label: 'Ideas', href: '#ideas' },
   { label: 'FAQ', href: '#faq' },
   { label: 'Contact', href: '#contact' },
 ]
