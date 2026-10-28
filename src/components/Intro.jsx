@@ -15,6 +15,7 @@ import {
   rand,
   splatter,
 } from '../lib/paintEngine.js'
+import { intro as introQuality, motionTier, settleMotionTier } from '../lib/motion.js'
 
 /*
   THE FIRST STROKE — opening sequence (≈2.7s)
@@ -138,29 +139,40 @@ export default function Intro({ onReveal, onDone }) {
       onDone?.()
     }
 
+    const W = window.innerWidth
+    const H = window.innerHeight
+    const canvas = canvasRef.current
     let ctx
+    let Q = introQuality(motionTier())
+    let bristles = []
+    let coverCache = null
+
+    // Canvas resolution follows the motion tier: device pixels, capped, and
+    // kept within a pixel budget so huge or very dense screens stay smooth.
+    const sizeCanvas = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, Q.dprCap, Math.sqrt(Q.pixelBudget / (W * H)))
+      canvas.width = Math.max(1, Math.round(W * dpr))
+      canvas.height = Math.max(1, Math.round(H * dpr))
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      coverCache = null
+      // Same seeds at every tier, so the strokes keep their character; fewer, wider bristles cost less.
+      const k = Q.bristles / 110
+      bristles = [makeBristles(11, Q.bristles), makeBristles(97, Q.bristles), makeBristles(211, Math.round(90 * k))]
+      document.documentElement.dataset.introQuality = motionTier()
+    }
     try {
-      const canvas = canvasRef.current
       ctx = canvas.getContext('2d')
       if (!ctx) throw new Error('no 2d context')
-      const lowPower = window.innerWidth < 700 || (navigator.hardwareConcurrency || 8) <= 4
-      const dpr = Math.min(window.devicePixelRatio || 1, lowPower ? 1.25 : 1.75)
-      canvas.width = Math.round(window.innerWidth * dpr)
-      canvas.height = Math.round(window.innerHeight * dpr)
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      sizeCanvas()
     } catch {
       done()
       return
     }
 
-    const W = window.innerWidth
-    const H = window.innerHeight
     const sc = buildScene(W, H)
     const parts = brushParts(brushRef.current)
-    const bristles = [makeBristles(11), makeBristles(97), makeBristles(211, 90)]
     const lastE = [0, 0, 0]
     const r = rand(5)
-    const texture = primerPattern(ctx)
     const swoosh = typeof Path2D !== 'undefined' ? new Path2D(SWOOSH_PATH) : null
     let finalStart = T.s2
     let finalDur = T.final - T.s2
@@ -171,25 +183,38 @@ export default function Intro({ onReveal, onDone }) {
     let lastDrop = 0
     let touched = false
 
-    const drawCover = (logoT) => {
-      ctx.globalCompositeOperation = 'source-over'
-      ctx.globalAlpha = 1
-      ctx.fillStyle = PRIMER
-      ctx.fillRect(0, 0, W, H)
+    // The primed wall (paint, daylight, edge shade, texture) is drawn once into an
+    // offscreen canvas; each logo frame just copies it instead of four full-screen fills.
+    const buildCover = () => {
+      const c = document.createElement('canvas')
+      c.width = canvas.width
+      c.height = canvas.height
+      const g = c.getContext('2d')
+      g.setTransform(canvas.width / W, 0, 0, canvas.height / H, 0, 0)
+      g.fillStyle = PRIMER
+      g.fillRect(0, 0, W, H)
       // soft daylight from the upper left, a touch of shade at the edges
-      const light = ctx.createRadialGradient(W * 0.22, H * 0.05, 0, W * 0.22, H * 0.05, Math.max(W, H) * 0.9)
+      const light = g.createRadialGradient(W * 0.22, H * 0.05, 0, W * 0.22, H * 0.05, Math.max(W, H) * 0.9)
       light.addColorStop(0, 'rgba(255,255,255,0.9)')
       light.addColorStop(1, 'rgba(255,255,255,0)')
-      ctx.fillStyle = light
-      ctx.fillRect(0, 0, W, H)
-      const shade = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.max(W, H) * 0.8)
+      g.fillStyle = light
+      g.fillRect(0, 0, W, H)
+      const shade = g.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.max(W, H) * 0.8)
       shade.addColorStop(0, 'rgba(13,31,77,0)')
       shade.addColorStop(1, 'rgba(13,31,77,0.07)')
-      ctx.fillStyle = shade
-      ctx.fillRect(0, 0, W, H)
-      ctx.globalAlpha = 0.55
-      ctx.fillStyle = texture
-      ctx.fillRect(0, 0, W, H)
+      g.fillStyle = shade
+      g.fillRect(0, 0, W, H)
+      g.globalAlpha = 0.55
+      g.fillStyle = primerPattern(g)
+      g.fillRect(0, 0, W, H)
+      return c
+    }
+
+    const drawCover = (logoT) => {
+      if (!coverCache) coverCache = buildCover()
+      ctx.globalCompositeOperation = 'source-over'
+      ctx.globalAlpha = 1
+      ctx.drawImage(coverCache, 0, 0, W, H)
 
       // Logo swoosh paints itself in, left to right
       const p = ease.outCubic(clamp((logoT - 120) / 380, 0, 1))
@@ -253,8 +278,8 @@ export default function Intro({ onReveal, onDone }) {
       pose(x, y, ang + lift, scale, foreTo, press, 1, dt)
 
       // occasional droplets thrown off the wet edge
-      if (k < 2 && e > 0.05 && e < 0.8 && performance.now() - lastDrop > 70) {
-        lastDrop = performance.now()
+      if (k < 2 && e > 0.05 && e < 0.8 && vt - lastDrop > 70 / Q.drops) {
+        lastDrop = vt
         const side = r() < 0.5 ? -1 : 1
         const half = s.band(e) / 2
         const nx = -Math.sin(ang)
@@ -267,13 +292,25 @@ export default function Intro({ onReveal, onDone }) {
       }
     }
 
+    // A capped clock: after a stall (tab switch, busy main thread) the brush carries
+    // on from where it was instead of jumping ahead, so motion never teleports.
     let last = 0
+    let vt = 0
+    let debt = 0
     const frame = (now) => {
       if (cancelled) return
       if (!t0) t0 = now
-      const t = now - t0
-      const dt = last ? now - last : 16
+      const raw = last ? now - last : 16
       last = now
+      // Long frames are capped; the lost time is repaid gently (up to 1.6× speed)
+      // so the brush never teleports and the intro doesn't drag on either.
+      const step = Math.min(raw, 50)
+      debt += raw - step
+      const repay = Math.min(debt, step * 0.6)
+      debt -= repay
+      const dt = step + repay
+      vt += dt
+      const t = vt
 
       try {
         if (!skipping && t < T.logo) {
@@ -314,6 +351,7 @@ export default function Intro({ onReveal, onDone }) {
           if (p > 0.4) reveal()
           if (p >= 1) {
             ctx.clearRect(0, 0, W, H)
+            performance.mark?.('intro-end')
             return done()
           }
         }
@@ -328,6 +366,7 @@ export default function Intro({ onReveal, onDone }) {
     const startLoop = () => {
       if (started || cancelled) return
       started = true
+      performance.mark?.('intro-start')
       raf = requestAnimationFrame(frame)
     }
 
@@ -335,7 +374,7 @@ export default function Intro({ onReveal, onDone }) {
       if (skipping || finished) return
       skipping = true
       // If the loop hasn't started yet (still waiting on fonts), sweep from t = 0 right now.
-      finalStart = t0 ? performance.now() - t0 : 0
+      finalStart = vt
       finalDur = 420
       // a wider brush so one quick pass clears everything
       const fin = sc.strokes[2]
@@ -344,15 +383,31 @@ export default function Intro({ onReveal, onDone }) {
       startLoop()
     }
 
-    // Give the display font a moment so the wordmark renders in Gloock.
-    const fontWait = document.fonts?.load
-      ? Promise.race([
-          Promise.all([document.fonts.load('400 100px Gloock'), document.fonts.load('600 20px "Hanken Grotesk"')]),
-          new Promise((res) => setTimeout(res, 600)),
-        ])
-      : Promise.resolve()
+    // Give the display font a moment so the wordmark renders in Gloock, start
+    // decoding the hero photo the brush will reveal, and measure a few frames to
+    // settle the motion tier. None of it can hold the intro back beyond 600 ms.
+    const heroImg = document.querySelector('.hero3-photo img')
+    const ready = Promise.race([
+      Promise.all([
+        document.fonts?.load
+          ? Promise.all([document.fonts.load('400 100px Gloock'), document.fonts.load('600 20px "Hanken Grotesk"')])
+          : null,
+        settleMotionTier(450),
+      ]),
+      new Promise((res) => setTimeout(res, 600)),
+    ])
+    heroImg?.decode?.().catch(() => {})
     drawCover(0)
-    fontWait.finally(startLoop)
+    ready.finally(() => {
+      // The tier may have changed after the frame probe; resize before the first stroke.
+      const nextQ = introQuality(motionTier())
+      if (nextQ !== Q && nextQ.bristles !== Q.bristles && !started) {
+        Q = nextQ
+        sizeCanvas()
+        drawCover(0)
+      }
+      startLoop()
+    })
 
     const onKey = (e) => e.key === 'Escape' && skipRef.current()
     window.addEventListener('keydown', onKey)
@@ -377,7 +432,7 @@ export default function Intro({ onReveal, onDone }) {
         ref={skipBtnRef}
         type="button"
         onClick={() => skipRef.current()}
-        className="absolute right-5 bottom-5 rounded-full bg-white/85 px-4 py-2.5 text-sm font-semibold text-ink shadow-[0_6px_20px_-8px_rgb(13_31_77/0.5)] backdrop-blur transition hover:bg-white md:right-8 md:bottom-8"
+        className="absolute right-5 bottom-5 rounded-full bg-white/95 px-4 py-2.5 text-sm font-semibold text-ink shadow-[0_6px_20px_-8px_rgb(13_31_77/0.5)] transition hover:bg-white md:right-8 md:bottom-8"
         style={{ marginBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
         Skip intro

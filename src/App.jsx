@@ -1,4 +1,4 @@
-import { Component, useCallback, useEffect, useState } from 'react'
+import { Component, memo, useCallback, useEffect, useState } from 'react'
 import Intro, { resetIntro, shouldPlayIntro } from './components/Intro.jsx'
 import { useReducedMotion } from './hooks/useReducedMotion.js'
 import { lockScroll } from './lib/scrollLock.js'
@@ -11,6 +11,15 @@ import Faq from './components/Faq.jsx'
 import Contact from './components/Contact.jsx'
 import Footer from './components/Footer.jsx'
 import MobileCallBar from './components/MobileCallBar.jsx'
+import { settleMotionTier } from './lib/motion.js'
+
+// Sections that take no props are memoised, so the intro's reveal (which
+// re-renders App mid-sweep) only touches the header and hero.
+const Services = memo(ServicesWhy)
+const Work = memo(RealWork)
+const Ideas = memo(Possibilities)
+const FaqSection = memo(Faq)
+const ContactSection = memo(Contact)
 
 // If the intro ever throws, drop it and show the site.
 class IntroBoundary extends Component {
@@ -32,6 +41,25 @@ export default function App() {
   const [runId, setRunId] = useState(0) // bumps on replay so the intro and hero start fresh
   const [revealed, setRevealed] = useState(false)
   const reduced = useReducedMotion()
+
+  // Brushed reveals switch their mask off once finished (see .paint-done in CSS):
+  // the look is identical, and later repaints inside no longer pay for masking.
+  useEffect(() => {
+    const onEnd = (e) => {
+      const t = e.target
+      if (!/mask/.test(e.propertyName) || !t.classList) return
+      if (t.classList.contains('is-in') || t.classList.contains('is-shown')) t.classList.add('paint-done')
+    }
+    document.addEventListener('transitionend', onEnd)
+    return () => document.removeEventListener('transitionend', onEnd)
+  }, [])
+
+  // Without the intro, settle the motion tier after first paint (the intro does it itself).
+  useEffect(() => {
+    if (playIntro) return
+    const id = (window.requestIdleCallback || setTimeout)(() => settleMotionTier(450), { timeout: 1200 })
+    return () => (window.cancelIdleCallback || clearTimeout)(id)
+  }, [playIntro])
 
   // Without the intro, still give the hero its entrance.
   useEffect(() => {
@@ -80,11 +108,11 @@ export default function App() {
       <Header revealed={revealed} inert={introOn} />
       <main id="main" inert={introOn}>
         <Hero key={runId} revealed={revealed} />
-        <ServicesWhy />
-        <RealWork />
-        <Possibilities />
-        <Faq />
-        <Contact />
+        <Services />
+        <Work />
+        <Ideas />
+        <FaqSection />
+        <ContactSection />
       </main>
       <Footer onReplayIntro={reduced ? undefined : replay} inert={introOn} />
       <MobileCallBar inert={introOn} />

@@ -3,6 +3,7 @@ import { business } from '../data/site.js'
 import { heroHouse } from '../data/generated.js'
 import { asset } from '../lib/asset.js'
 import { useReducedMotion } from '../hooks/useReducedMotion.js'
+import { motionTier } from '../lib/motion.js'
 import { PhoneIcon } from './Icons.jsx'
 import BrushEdge from './BrushEdge.jsx'
 
@@ -18,19 +19,30 @@ export default function Hero({ revealed }) {
   const ref = useRef(null)
 
   // Scroll parallax + a whisper of pointer depth on desktop.
+  // Writes go to the photo layer only (not the whole hero, which would restyle
+  // every descendant), at most once per frame, with no layout reads: the hero
+  // sits at the top of the page, so its size is cached and only re-read on resize.
   useEffect(() => {
     const el = ref.current
-    if (!el || reduced) return
-    const fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches
+    const photo = el?.querySelector('.hero3-photo')
+    if (!el || !photo || reduced) return
+    const fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches && motionTier() !== 'lite'
     let raf = 0
     let pointer = null
+    let w = el.offsetWidth
+    let h = el.offsetHeight
+    let lastScroll = -1
     const apply = () => {
       raf = 0
-      el.style.setProperty('--scroll', `${Math.min(window.scrollY, window.innerHeight * 1.2)}px`)
-      if (pointer) {
-        const r = el.getBoundingClientRect()
-        el.style.setProperty('--px', ((pointer.clientX - r.left) / r.width - 0.5).toFixed(3))
-        el.style.setProperty('--py', ((pointer.clientY - r.top) / r.height - 0.5).toFixed(3))
+      const y = Math.min(window.scrollY, h * 1.2)
+      if (y !== lastScroll) {
+        lastScroll = y
+        photo.style.setProperty('--scroll', `${y}px`)
+      }
+      if (pointer && window.scrollY < h) {
+        photo.style.setProperty('--px', (pointer.clientX / w - 0.5).toFixed(3))
+        photo.style.setProperty('--py', ((pointer.clientY + window.scrollY) / h - 0.5).toFixed(3))
+        pointer = null
       }
     }
     const queue = () => {
@@ -40,12 +52,19 @@ export default function Hero({ revealed }) {
       pointer = e
       queue()
     }
+    const onResize = () => {
+      w = el.offsetWidth
+      h = el.offsetHeight
+      queue()
+    }
     window.addEventListener('scroll', queue, { passive: true })
+    window.addEventListener('resize', onResize, { passive: true })
     if (fine) el.addEventListener('pointermove', onMove, { passive: true })
     apply()
     return () => {
       cancelAnimationFrame(raf)
       window.removeEventListener('scroll', queue)
+      window.removeEventListener('resize', onResize)
       el.removeEventListener('pointermove', onMove)
     }
   }, [reduced])

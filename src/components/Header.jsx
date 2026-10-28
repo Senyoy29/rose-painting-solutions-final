@@ -9,15 +9,39 @@ export default function Header({ revealed = true, inert = false }) {
   const barRef = useRef(null)
   const [open, setOpen] = useState(false)
 
+  // Once per frame at most; the page height is measured on resize, not on every scroll event.
   useEffect(() => {
-    const onScroll = () => {
-      setSolid(window.scrollY > 40)
-      const max = document.documentElement.scrollHeight - window.innerHeight
-      if (barRef.current) barRef.current.style.transform = `scaleX(${max > 0 ? Math.min(1, window.scrollY / max) : 0})`
+    let raf = 0
+    let max = 1
+    let wasSolid = null
+    const measure = () => {
+      max = document.documentElement.scrollHeight - window.innerHeight
     }
-    onScroll()
+    const apply = () => {
+      raf = 0
+      const y = window.scrollY
+      const s = y > 40
+      if (s !== wasSolid) {
+        wasSolid = s
+        setSolid(s)
+      }
+      if (barRef.current) barRef.current.style.transform = `scaleX(${max > 0 ? Math.min(1, y / max) : 0})`
+    }
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(apply)
+    }
+    measure()
+    apply()
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => (measure(), onScroll())) : null
+    ro?.observe(document.body)
     window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
+    window.addEventListener('resize', measure, { passive: true })
+    return () => {
+      cancelAnimationFrame(raf)
+      ro?.disconnect()
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', measure)
+    }
   }, [])
 
   useEffect(() => {
@@ -42,7 +66,7 @@ export default function Header({ revealed = true, inert = false }) {
     <header
       inert={inert}
       className={`hdr fixed inset-x-0 top-0 z-50 ${revealed ? 'is-in' : ''} ${light ? 'on-dark' : ''} transition-[background,box-shadow,backdrop-filter] duration-500 ${
-        light ? 'bg-transparent' : 'bg-white/88 shadow-[0_1px_0_rgb(13_31_77/0.08),0_10px_30px_-20px_rgb(13_31_77/0.35)] backdrop-blur-xl'
+        light ? 'bg-transparent' : 'hdr-solid shadow-[0_1px_0_rgb(13_31_77/0.08),0_10px_30px_-20px_rgb(13_31_77/0.35)]'
       }`}
     >
       <a

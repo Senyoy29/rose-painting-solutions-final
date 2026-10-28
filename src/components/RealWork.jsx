@@ -23,7 +23,7 @@ export default function RealWork() {
 
   return (
     <section id="work" aria-labelledby="work-title" className="relative overflow-hidden bg-midnight py-20 text-white md:py-24">
-      <div aria-hidden="true" className="pointer-events-none absolute -top-48 right-[-12%] h-[40rem] w-[40rem] rounded-full bg-cobalt/35 blur-[140px]" />
+      <div aria-hidden="true" className="work-glow pointer-events-none absolute -top-[32rem] right-[calc(-12%-20rem)] h-[80rem] w-[80rem]" />
 
       <div className="shell relative">
         <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">

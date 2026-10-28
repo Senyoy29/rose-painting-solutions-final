@@ -114,6 +114,41 @@ Any static host works. The build uses relative paths, so it also runs from a sub
 
 ---
 
+## Motion and performance
+
+The site picks one of three motion levels once, before anything animates, and never switches mid-animation (`src/lib/motion.js`):
+
+| Level | Who gets it | What changes |
+| --- | --- | --- |
+| **high** | Most devices, including modern phones | Full detail: about 110 bristles per stroke, canvas up to 2× pixel density, frosted glass on the desktop header and hero phone pill |
+| **balanced** | Devices reporting 3–4 GB of memory, Data Saver on, or slow frames measured | Same intro, about 64 bristles, canvas up to 1.5×, a lighter brush shadow |
+| **lite** | Devices reporting 2 GB of memory or less, or very slow frames measured | Same intro with about 36 bristles at 1× pixel density; photo reveals glide in instead of being brush-masked |
+
+How it decides:
+
+- **Memory:** it reads the device memory figure only where the browser reports it (Chrome-based browsers). iPhones and Safari don't report it, so they're never downgraded for that reason.
+- **Frame check:** it times about 14 animation frames while the intro waits for its fonts. It can only lower the level, never raise it.
+- **Privacy:** the result lives for this browser tab only and is never sent anywhere.
+- **Testing:** add `?motion=high`, `?motion=balanced` or `?motion=lite` to the address to force a level.
+
+Anyone with "reduce motion" turned on skips the intro and gets still reveals, as before.
+
+Where the speed comes from:
+
+- **Intro:** the primed wall is drawn once and copied each frame, instead of four full-screen fills per frame.
+  - Bristles hidden under the solid paint are skipped, so the result looks identical.
+  - A stall-safe clock lets the brush catch up smoothly after a hiccup instead of jumping.
+  - The hero photo starts decoding while the fonts load.
+- **Slider:** dragging writes a single 0–100 number that CSS turns into transforms (the reveal edge, divider and handle).
+  - There are no React re-renders and no layout per move; GPU layers are promoted only while it moves.
+  - Switching projects decodes the next photos before swapping them in.
+- **Reveals:** brushed masks are switched off as soon as each reveal finishes.
+- **Glows and bars:**
+  - The Real Work glow is a gradient rather than a 140px blur.
+  - Fixed bars no longer re-blur the page on every scroll frame on phones.
+- **Scroll work:** the header updates at most once per frame, the phone call bar uses visibility observers, and the hero parallax writes only to the photo.
+- **Full-screen viewer:** it loads the photo size that fits the screen.
+
 ## How it's put together
 
 ```
@@ -143,7 +178,7 @@ src/
 - `layout="stacked"` for the footer and other large uses
 - `<BrushMark tone="tile" />` for a square icon (the favicon in `public/favicon.svg` is the same design)
 
-**Motion.** The paint engine (`src/lib/paintEngine.js`) powers both the intro and the hero room. It simulates each bristle individually, varies brush pressure and throws off a few droplets. One brushed-edge mask (`--brush-mask` in `index.css`) drives the image reveals, project switches, the before/after toggle and the button fills. If anything in the intro fails, the site shows immediately: there's a fallback when canvas isn't available, plus a 6-second failsafe.
+**Motion.** The paint engine (`src/lib/paintEngine.js`) powers the intro. It simulates each bristle individually, varies brush pressure and throws off a few droplets. One brushed-edge mask (`--brush-mask` in `index.css`) drives the image reveals, project switches and the button fills. If anything in the intro fails, the site shows immediately: there's a fallback when canvas isn't available, plus a 6-second failsafe.
 
 **Design system.** Colours: primer `#FBFCFE`, cobalt `#2348D6`, electric cobalt `#3D6BFF`, navy `#0D1F4D`, ice `#E7EFFC`, sky `#BFD3F7`, wash `#EEF3FA`, blue-gray `#5B6888`, painter's-tape blue `#5AA6E8`. Type: Gloock for display, Hanken Grotesk for text.
 

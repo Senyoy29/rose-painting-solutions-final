@@ -14,18 +14,28 @@ import Lightbox from './Lightbox.jsx'
  */
 const ratio = (p) => p.w / p.h
 const srcSet = (p) => `${asset(p.small)} ${p.smallW}w, ${asset(p.src)} ${p.w}w`
-const loaded = new Set()
-function preload(t) {
-  if (loaded.has(t.id)) return
-  loaded.add(t.id)
-  ;[t.before, t.after].forEach((p) => {
+// Same `sizes` as the slider, so the browser preloads exactly the file it will show.
+const SLIDER_SIZES = '(min-width: 1024px) 52rem, 92vw'
+const prepared = new Map()
+/** Fetch and decode a project's two photos (once). Resolves when both are ready to paint. */
+function prepare(t) {
+  if (prepared.has(t.id)) return prepared.get(t.id)
+  const jobs = [t.before, t.after].map((p) => {
     const im = new Image()
+    im.sizes = SLIDER_SIZES
+    im.srcset = srcSet(p)
     im.src = asset(p.small)
+    return im.decode ? im.decode().catch(() => {}) : Promise.resolve()
   })
+  const ready = Promise.all(jobs)
+  prepared.set(t.id, ready)
+  return ready
 }
 
 export default function ProjectShowcase({ active }) {
-  const [idx, setIdx] = useState(0)
+  const [idx, setIdx] = useState(0) // project on show
+  const [sel, setSel] = useState(0) // project chosen (cards respond instantly)
+  const want = useRef(0)
   const [view, setView] = useState('slider')
   const [shown, setShown] = useState(false)
   const [demoDone, setDemoDone] = useState(false)
@@ -46,10 +56,18 @@ export default function ProjectShowcase({ active }) {
     }
   }, [active, idx, view])
 
+  // The card responds at once; the photos swap as soon as both are decoded (or
+  // after 350 ms at most), so the brush never reveals a half-decoded image.
   const choose = (i) => {
-    if (i === idx) return
-    setShown(false)
-    setIdx(i)
+    if (i === sel) return
+    setSel(i)
+    want.current = i
+    const swap = () => {
+      if (want.current !== i) return
+      setShown(false)
+      setIdx(i)
+    }
+    Promise.race([prepare(transformations[i]), new Promise((r) => setTimeout(r, 350))]).then(swap)
   }
   const changeView = (v) => {
     if (v === view) return
@@ -92,11 +110,11 @@ export default function ProjectShowcase({ active }) {
             key={p.id}
             type="button"
             className="pick"
-            aria-pressed={i === idx}
+            aria-pressed={i === sel}
             aria-controls="exhibit-stage"
             onClick={() => choose(i)}
-            onPointerEnter={() => preload(p)}
-            onFocus={() => preload(p)}
+            onPointerEnter={() => prepare(p)}
+            onFocus={() => prepare(p)}
           >
             <span className="pick-thumb" aria-hidden="true">
               <img src={asset(p.before.thumb)} alt="" width="320" height="240" loading="lazy" decoding="async" />
@@ -105,7 +123,7 @@ export default function ProjectShowcase({ active }) {
             <span className="pick-text">
               <span className="pick-title">{p.title}</span>
               <span className="pick-change">{p.change}</span>
-              <span className={`pick-stroke paint-mask ${i === idx ? 'is-shown' : ''}`} aria-hidden="true" />
+              <span className={`pick-stroke paint-mask ${i === sel ? 'is-shown' : ''}`} aria-hidden="true" />
             </span>
           </button>
         ))}

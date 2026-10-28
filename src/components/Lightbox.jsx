@@ -61,7 +61,10 @@ export default function Lightbox({ photos, index, onIndex, onClose }) {
     ;[1, -1].forEach((d) => {
       const p = photos[(index + d + photos.length) % photos.length]
       const im = new Image()
-      im.src = asset(p.src)
+      im.sizes = '100vw'
+      if (p.small) im.srcset = `${asset(p.small)} ${p.smallW || 800}w, ${asset(p.src)} ${p.w}w`
+      im.src = asset(p.small || p.src)
+      im.decode?.().catch(() => {})
     })
   }, [index, photos])
 
@@ -98,7 +101,10 @@ export default function Lightbox({ photos, index, onIndex, onClose }) {
       <figure className="lightbox-figure" onClick={(e) => e.target === e.currentTarget && onClose()}>
         <img
           key={photo.id}
-          src={asset(photo.src)}
+          src={asset(photo.small || photo.src)}
+          srcSet={photo.small ? `${asset(photo.small)} ${photo.smallW || 800}w, ${asset(photo.src)} ${photo.w}w` : undefined}
+          sizes="(min-width: 1152px) 72rem, 100vw"
+          decoding="async"
           alt={photo.alt}
           width={photo.w}
           height={photo.h}

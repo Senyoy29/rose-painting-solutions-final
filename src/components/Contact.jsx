@@ -42,7 +42,7 @@ export default function Contact() {
             />
           </a>
 
-          <div className="mt-10 max-w-md rounded-[18px] bg-white/10 p-6 ring-1 ring-white/20 backdrop-blur-sm">
+          <div className="mt-10 max-w-md rounded-[18px] bg-white/10 p-6 ring-1 ring-white/20">
             <div className="flex items-center justify-between gap-4">
               <h3 className="flex items-center gap-2 font-sans font-semibold">
                 <ClockIcon /> Opening hours

@@ -66,9 +66,18 @@ export function paintSegment(ctx, stroke, bristles, e0, e1) {
   const [ax, ay] = stroke.point(e0)
   const [bx, by] = stroke.point(e1)
   const steps = Math.max(2, Math.ceil(Math.hypot(bx - ax, by - ay) / 7))
-  const samples = []
-  for (let i = 0; i <= steps; i++) {
-    const e = lerp(e0, e1, i / steps)
+  const n = steps + 1
+  // Flat sample buffers (no per-sample objects).
+  const SE = new Float32Array(n)
+  const SX = new Float32Array(n)
+  const SY = new Float32Array(n)
+  const NX = new Float32Array(n)
+  const NY = new Float32Array(n)
+  const SB = new Float32Array(n)
+  let bandMin = Infinity
+  let bandMax = 0
+  for (let i = 0; i < n; i++) {
+    const e = e0 + (e1 - e0) * (i / steps)
     const [x, y] = stroke.point(e)
     const [x2, y2] = stroke.point(Math.min(1, e + 0.002))
     const [x0, y0] = stroke.point(Math.max(0, e - 0.002))
@@ -77,8 +86,15 @@ export function paintSegment(ctx, stroke, bristles, e0, e1) {
     const len = Math.hypot(tx, ty) || 1
     tx /= len
     ty /= len
-    const p = stroke.pressure ? stroke.pressure(e) : 1
-    samples.push({ e, x, y, nx: -ty, ny: tx, band: stroke.band(e) * p })
+    const band = stroke.band(e) * (stroke.pressure ? stroke.pressure(e) : 1)
+    SE[i] = e
+    SX[i] = x
+    SY[i] = y
+    NX[i] = -ty
+    NY[i] = tx
+    SB[i] = band
+    if (band < bandMin) bandMin = band
+    if (band > bandMax) bandMax = band
   }
 
   ctx.save()
@@ -86,32 +102,40 @@ export function paintSegment(ctx, stroke, bristles, e0, e1) {
   ctx.lineCap = 'butt'
   ctx.lineJoin = 'round'
 
-  const coreOnly = stroke.coreOnlyAbove && samples[0].band > stroke.coreOnlyAbove
+  const coreOnly = stroke.coreOnlyAbove && SB[0] > stroke.coreOnlyAbove
   // Loaded core: solid coverage that thins as the brush runs dry.
   const dryAt = stroke.dryStart ?? 0.72
-  ctx.globalAlpha = e1 < dryAt ? 1 : Math.max(0.35, 1 - (e1 - dryAt) * 2.4)
+  const coreAlpha = e1 < dryAt ? 1 : Math.max(0.35, 1 - (e1 - dryAt) * 2.4)
+  const coreW = SB[n - 1] * (coreOnly ? 1 : 0.8)
+  ctx.globalAlpha = coreAlpha
   ctx.beginPath()
-  samples.forEach((s, i) => (i ? ctx.lineTo(s.x, s.y) : ctx.moveTo(s.x, s.y)))
-  ctx.lineWidth = samples[samples.length - 1].band * (coreOnly ? 1 : 0.8)
+  ctx.moveTo(SX[0], SY[0])
+  for (let i = 1; i < n; i++) ctx.lineTo(SX[i], SY[i])
+  ctx.lineWidth = coreW
   ctx.stroke()
 
   if (coreOnly) {
     ctx.restore()
     return
   }
-  const spacing = samples[0].band / bristles.length
+  // Where the core has already erased everything (alpha 1), a bristle that sits
+  // wholly inside it changes no pixels — skip it. The visible result is identical.
+  const coreHalf = coreAlpha >= 1 ? coreW / 2 - 1 : -1
+  const spacing = SB[0] / bristles.length
   for (const b of bristles) {
     const alpha = b.a * (e1 > b.dry ? Math.max(0, 1 - (e1 - b.dry) * 4.5) : 1)
     if (alpha <= 0.02) continue
+    const lw = Math.max(1.2, b.w * spacing * 2.2)
+    if (coreHalf > 0 && (Math.abs(b.u) + b.wob) * bandMax + lw / 2 <= coreHalf) continue
     ctx.globalAlpha = alpha
-    ctx.lineWidth = Math.max(1.2, b.w * spacing * 2.2)
+    ctx.lineWidth = lw
     ctx.beginPath()
-    samples.forEach((s, i) => {
-      const off = (b.u + Math.sin(s.e * b.f * Math.PI + b.ph) * b.wob) * s.band
-      const px = s.x + s.nx * off
-      const py = s.y + s.ny * off
+    for (let i = 0; i < n; i++) {
+      const off = (b.u + Math.sin(SE[i] * b.f * Math.PI + b.ph) * b.wob) * SB[i]
+      const px = SX[i] + NX[i] * off
+      const py = SY[i] + NY[i] * off
       i ? ctx.lineTo(px, py) : ctx.moveTo(px, py)
-    })
+    }
     ctx.stroke()
   }
   ctx.restore()
@@ -151,16 +175,19 @@ export function poseBrush(parts, { x, y, angle, scale, fore = FORESHORTEN, flex 
   if (!el) return
   const flip = Math.cos(angle) < -0.01 ? -1 : 1
   el.style.transform = `translate(${x}px, ${y}px) rotate(${angle}rad) scale(${scale * fore}, ${scale * flip}) translate(${-BRUSH_VIEW.tipX}px, ${-BRUSH_VIEW.tipY}px)`
-  el.style.opacity = opacity
+  const o = String(opacity)
+  if (el.style.opacity !== o) el.style.opacity = o
   if (brand && brand.dataset.flip !== String(flip)) {
     brand.dataset.flip = String(flip)
     brand.setAttribute('transform', flip < 0 ? 'translate(700 0) scale(-1 1)' : '')
   }
   if (bristles) {
-    bristles.setAttribute(
-      'transform',
-      `translate(${BRUSH_VIEW.ferruleX} 90) skewY(${(flex * flip).toFixed(2)}) scale(${press.toFixed(3)} 1) translate(${-BRUSH_VIEW.ferruleX} -90)`,
-    )
+    // Only touch the SVG when the bend visibly changes (each write repaints the brush).
+    const t = `translate(${BRUSH_VIEW.ferruleX} 90) skewY(${(flex * flip).toFixed(1)}) scale(${press.toFixed(2)} 1) translate(${-BRUSH_VIEW.ferruleX} -90)`
+    if (bristles.__t !== t) {
+      bristles.__t = t
+      bristles.setAttribute('transform', t)
+    }
   }
 }
 
