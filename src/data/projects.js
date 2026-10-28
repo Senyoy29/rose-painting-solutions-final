@@ -12,7 +12,9 @@
 // ─────────────────────────────────────────────────────────────
 const dir = 'images/rose-painting/real-work/'
 
-const photo = (name, w, h, smallW, alt, tone) => ({
+// focus / focusM: where the slider frame centres its crop (desktop 16:9, phone 4:5),
+// chosen so the painted walls stay in view. Photos are cropped, never stretched.
+const photo = (name, w, h, smallW, alt, tone, focus = '50% 50%', focusM = '50% 50%') => ({
   src: `${dir}${name}.webp`,
   small: `${dir}${name}-${smallW}.webp`,
   thumb: `${dir}${name}-thumb.webp`,
@@ -21,6 +23,8 @@ const photo = (name, w, h, smallW, alt, tone) => ({
   smallW,
   alt,
   tone,
+  focus,
+  focusM,
 })
 
 export const transformations = [
@@ -37,6 +41,8 @@ export const transformations = [
       800,
       'Before: bathroom double vanity with a patterned wall covering behind and around the mirror',
       '#c9bfae',
+      '50% 22%',
+      '50% 40%',
     ),
     after: photo(
       '10-bathroom-vanity-plain-wall',
@@ -45,6 +51,8 @@ export const transformations = [
       800,
       'After: the same bathroom double vanity with smooth plain white walls and a large mirror, with paint and tools still on the counter',
       '#d9d6cf',
+      '50% 45%',
+      '50% 45%',
     ),
   },
   {
@@ -60,6 +68,8 @@ export const transformations = [
       760,
       'Before: room with pale blue walls, a small high window with a dark valance, a wall shelf and a stained beige carpet',
       '#a9b2bd',
+      '50% 6%',
+      '50% 30%',
     ),
     after: photo(
       'room-project-02-after',
@@ -68,6 +78,8 @@ export const transformations = [
       760,
       'After: the same room with bright white walls, a ceiling fan, the small high window and a dark carpet, seen from a different corner',
       '#9a9894',
+      '50% 38%',
+      '62% 50%',
     ),
   },
   {
@@ -83,6 +95,8 @@ export const transformations = [
       760,
       'Before: room with pale blue walls, a wide window with vertical blinds and a dark valance, and a stained beige carpet',
       '#a9a69c',
+      '50% 6%',
+      '50% 30%',
     ),
     after: photo(
       'room-project-03-after',
@@ -91,10 +105,12 @@ export const transformations = [
       760,
       'After: the same room with white walls, a ceiling fan, a wide three-part window and a dark carpet, seen from a different corner',
       '#8f8a78',
+      '50% 38%',
+      '44% 50%',
     ),
   },
 ]
 
 // Shown with every project so the presentation stays honest.
 export const angleNote =
-  'Each before and after was taken from a different spot in the room, so the two views won’t line up exactly.'
+  'The before and after photos were taken from slightly different spots, so the views won’t line up exactly. Nothing has been warped or edited to match.'

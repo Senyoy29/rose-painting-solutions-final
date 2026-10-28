@@ -35,12 +35,12 @@ This file holds **confirmed** pairs only. You confirmed all three:
 | Room with a high window | `IMG_0330` → `room-project-02-before` | `IMG_0333` → `room-project-02-after` |
 | Room with a wide window | `IMG_0331` → `room-project-03-before` | `IMG_0332` → `room-project-03-after` |
 
-The photos in each pair were taken from different spots, so the site never lays one over the other. Visitors pick a project, then choose a view:
+Visitors pick a project from the cards, then compare it two ways:
 
-- **Side by side** (the default on larger screens): both photos at the same height, each in its own proportions. Select either photo to view the pair full screen.
-- **Before / after** (the default on phones): one frame. Tap the After button, tap the photo or swipe to brush the after photo over the before. Each photo is shown whole, never cropped.
+- **Slider** (the default): the before photo sits underneath and the after photo is revealed as you drag the paintbrush handle. It works with a mouse, trackpad, touch (a clear sideways swipe, so scrolling the page never moves it) and the keyboard (arrow keys, Page Up/Down, Home/End). It starts at 50% and plays one short sweep the first time it appears, unless reduced motion is on. The frame is 16:9 on larger screens and 4:5 on phones. Each photo is cropped to fit, never stretched; `focus` and `focusM` in `projects.js` set where each crop is centred (desktop and phone).
+- **Side by side**: both photos whole, at equal height, in their own proportions. Select either one to view the pair full screen.
 
-A note under the projects explains that the views won't line up exactly.
+The photos in each pair were taken from slightly different spots, so the views don't line up exactly. Nothing has been warped or edited to make them match, and a note on the page says so.
 
 Each photo has a full-size file, a smaller copy (`-760` or `-800`) and a `-thumb` copy (320×240) for the project picker. The new photos were supplied already optimized; their black screenshot bands were cropped off and nothing in the rooms was changed.
 
@@ -127,7 +127,8 @@ src/
     Hero.jsx              full-bleed house photograph, camera push, parallax
     ServicesWhy.jsx       services as a paint-swatch fan + four promises
     RealWork.jsx          before & after projects + finished-rooms filmstrip
-    ProjectShowcase.jsx   project picker, side-by-side and before/after views
+    ProjectShowcase.jsx   project cards, slider and side-by-side views
+    CompareSlider.jsx     draggable before/after slider (mouse, touch, keyboard)
     Possibilities.jsx     AI concept interiors (clearly labelled)
     Lightbox.jsx          full-screen photo viewer (keyboard, swipe)
     RevealHeading.jsx     headings that rise in as they scroll into view
@@ -145,6 +146,6 @@ src/
 
 **Design system.** Colours: primer `#FBFCFE`, cobalt `#2348D6`, electric cobalt `#3D6BFF`, navy `#0D1F4D`, ice `#E7EFFC`, sky `#BFD3F7`, wash `#EEF3FA`, blue-gray `#5B6888`, painter's-tape blue `#5AA6E8`. Type: Gloock for display, Hanken Grotesk for text.
 
-**Accessibility.** The site has a keyboard-operable project picker (arrow keys work too), accordion and menu, a skip link, visible focus rings, labelled form errors and live regions. The intro is skipped for anyone with “reduce motion” turned on and can be skipped with Esc or the button.
+**Accessibility.** The site has a keyboard-operable before & after slider and project cards (arrow keys work too), accordion and menu, a skip link, visible focus rings, labelled form errors and live regions. The intro is skipped for anyone with “reduce motion” turned on and can be skipped with Esc or the button.
 
 **Performance.** Images are responsive (`srcset`) and lazy-loaded below the fold, with explicit sizes to avoid layout shift. The intro canvas is capped at 1.75× pixel density and is removed from the page when it finishes.

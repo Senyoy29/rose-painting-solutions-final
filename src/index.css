@@ -189,7 +189,7 @@
    spots, so they hang side by side (or brush over one another);
    nothing is overlaid as if it lined up. */
 .exhibit {
-  --h: min(36rem, 68svh);
+  --h: min(30rem, 60svh);
   display: grid;
   gap: 1.75rem;
   grid-template-areas: 'pick' 'stage' 'label';
@@ -199,13 +199,13 @@
 .exhibit-label { grid-area: label; max-width: 34rem; }
 @media (min-width: 1024px) {
   .exhibit {
-    grid-template-columns: 17.5rem minmax(0, 1fr);
-    grid-template-rows: auto 1fr;
-    grid-template-areas: 'pick stage' 'label stage';
-    column-gap: clamp(2.5rem, 4vw, 4rem);
-    row-gap: 2.25rem;
+    grid-template-columns: minmax(0, 1fr) 17rem;
+    grid-template-areas: 'pick pick' 'stage label';
+    column-gap: clamp(2.5rem, 4vw, 3.5rem);
+    row-gap: 2rem;
+    align-items: center;
   }
-  .picker { grid-template-columns: 1fr; gap: 0.3rem; }
+  .picker { gap: 0.75rem; }
   .exhibit-stage { min-height: var(--h); display: grid; align-items: center; }
 }
 
@@ -285,56 +285,110 @@
 .dip-seam.is-in { opacity: 1; scale: 1; }
 .dip-seam-paint { fill: var(--color-cobalt); }
 
-/* Before / after: one frame, the after photo brushed over the before */
-.flip {
+/* Slider: the before photo underneath, the after photo revealed from the right */
+.compare-wrap { width: min(100%, calc(var(--h) * 16 / 9)); margin-inline: auto; border-radius: 18px; }
+.compare {
+  --pos: 50%;
   position: relative;
-  width: min(100%, calc(var(--h) * var(--fa)));
-  aspect-ratio: var(--fa);
-  margin-inline: auto;
   overflow: hidden;
-  border-radius: 20px;
-  background: #0f2050;
-  cursor: pointer;
+  border-radius: 18px;
+  background: #1a2a55;
   touch-action: pan-y;
   user-select: none;
-  box-shadow: 0 40px 80px -40px rgb(0 0 0 / 0.75), 0 0 0 1px rgb(255 255 255 / 0.06);
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  cursor: ew-resize;
+  box-shadow: 0 40px 80px -40px rgb(0 0 0 / 0.75), 0 0 0 1px rgb(255 255 255 / 0.08);
 }
-.flip-layer { position: absolute; inset: 0; z-index: 1; overflow: hidden; isolation: isolate; }
-.flip-layer[data-side='after'] { z-index: 2; }
-.flip-layer.paint-mask { transition-duration: 1.05s; }
-.flip-bg {
+.compare.is-dragging { cursor: grabbing; }
+.compare-wide { width: 100%; aspect-ratio: 16 / 9; }
+@media (max-width: 767px) { .compare-wide { aspect-ratio: 4 / 5; } }
+.compare img {
   position: absolute;
-  inset: -10%;
-  width: 120%;
-  max-width: none;
-  height: 120%;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  filter: blur(30px) saturate(1.15) brightness(0.5);
+  object-position: var(--f, 50% 50%);
+  pointer-events: none;
+  -webkit-user-drag: none;
 }
-.flip-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; -webkit-user-drag: none; }
-.flip-toggle {
+@media (max-width: 767px) { .compare img { object-position: var(--fm, var(--f, 50% 50%)); } }
+.compare-after { position: absolute; inset: 0; clip-path: inset(0 0 0 var(--pos)); }
+.compare-tape { transition: opacity 0.3s; }
+.compare-tape[data-hidden='true'] { opacity: 0; }
+/* The dividing line: a fine white stroke that tapers out at both ends */
+.compare-line {
   position: absolute;
-  z-index: 5;
+  top: 0;
+  bottom: 0;
+  left: var(--pos);
+  z-index: 2;
+  width: 2px;
+  margin-left: -1px;
+  background: linear-gradient(180deg, rgb(255 255 255 / 0) 0%, #fff 9%, #fff 91%, rgb(255 255 255 / 0) 100%);
+  box-shadow: 0 0 16px rgb(191 211 247 / 0.6);
+  pointer-events: none;
+}
+/* The handle: the brand paintbrush in a cobalt disc, with arrows either side */
+.compare-grip {
+  position: absolute;
+  top: 50%;
+  left: var(--pos);
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  translate: -50% -50%;
+  pointer-events: none;
+}
+.grip-disc {
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #3d63ea, var(--color-cobalt) 60%, var(--color-cobalt-deep));
+  box-shadow: 0 0 0 2.5px #fff, 0 14px 30px -8px rgb(10 24 56 / 0.75);
+  transition: scale 0.35s var(--ease-out-soft), box-shadow 0.35s var(--ease-out-soft);
+}
+.grip-disc svg { translate: 1px 1px; }
+.grip-arrow { color: #fff; filter: drop-shadow(0 1px 3px rgb(10 24 56 / 0.65)); transition: translate 0.35s var(--ease-out-soft); }
+.compare:hover .grip-disc { scale: 1.06; }
+.compare:hover .grip-l { translate: -3px 0; }
+.compare:hover .grip-r { translate: 3px 0; }
+.compare.is-dragging .grip-disc { scale: 1.1; box-shadow: 0 0 0 2.5px #fff, 0 0 0 10px rgb(191 211 247 / 0.32), 0 14px 30px -8px rgb(10 24 56 / 0.75); }
+.compare.is-dragging .grip-l { translate: -6px 0; }
+.compare.is-dragging .grip-r { translate: 6px 0; }
+.grip-hint {
+  position: absolute;
+  top: calc(100% + 0.7rem);
   left: 50%;
-  bottom: 1rem;
   translate: -50% 0;
-  display: inline-flex;
-  padding: 4px;
+  padding: 0.3rem 0.8rem;
   border-radius: 999px;
-  background: rgb(10 24 56 / 0.78);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.2), 0 10px 30px -10px rgb(0 0 0 / 0.5);
-  cursor: default;
-}
-.flip-toggle button {
-  min-height: 2.75rem;
-  min-width: 5.5rem;
-  padding-inline: 1.1rem;
-  border-radius: 999px;
+  background: rgb(10 24 56 / 0.82);
+  color: #fff;
+  font-size: 0.82rem;
   font-weight: 650;
-  color: rgb(255 255 255 / 0.85);
-  transition: background 0.4s var(--ease-out-soft), color 0.4s;
+  white-space: nowrap;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.18);
+  transition: opacity 0.5s;
 }
-.flip-toggle button[aria-pressed='true'] { background: #fff; color: var(--color-ink); }
+.grip-hint.is-gone { opacity: 0; }
+/* Keyboard + screen readers use a native range input laid over the photo */
+.compare-range {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.compare:has(.compare-range:focus-visible) { outline: 3px solid #fff; outline-offset: 4px; }
+.compare:has(.compare-range:focus-visible) .grip-disc { box-shadow: 0 0 0 2.5px #fff, 0 0 0 8px rgb(191 211 247 / 0.45); }
 
 /* Wall label */
 .exhibit-title {

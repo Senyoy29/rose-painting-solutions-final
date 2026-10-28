@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 import { transformations, angleNote } from '../data/projects.js'
 import { asset } from '../lib/asset.js'
+import CompareSlider from './CompareSlider.jsx'
 import Lightbox from './Lightbox.jsx'
 
 /**
- * The three confirmed before & after projects, hung like an exhibition.
- *
- * Every pair was photographed from a different spot, so nothing is overlaid
- * or "wiped" across. Two honest views:
- *  - Side by side: a diptych at equal height, each photo in its own proportions.
- *  - Before / after: one frame; the after photo is brushed over the before.
+ * The three confirmed before & after projects.
+ *  - Project cards on top choose the project.
+ *  - Slider (default): drag to reveal the after photo over the before.
+ *  - Side by side: both photos whole, at equal height.
+ * The photos were taken from slightly different spots; nothing is warped to
+ * match, and a note says so.
  */
 const ratio = (p) => p.w / p.h
 const srcSet = (p) => `${asset(p.small)} ${p.smallW}w, ${asset(p.src)} ${p.w}w`
@@ -22,28 +23,18 @@ function preload(t) {
     im.src = asset(p.small)
   })
 }
-const smallScreen = () => typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
 
 export default function ProjectShowcase({ active }) {
   const [idx, setIdx] = useState(0)
-  const [isSmall, setIsSmall] = useState(smallScreen)
-  const [view, setView] = useState(() => (smallScreen() ? 'flip' : 'pair'))
-  const [side, setSide] = useState('before')
+  const [view, setView] = useState('slider')
   const [shown, setShown] = useState(false)
+  const [demoDone, setDemoDone] = useState(false)
   const [openAt, setOpenAt] = useState(null)
-  const touch = useRef(null)
   const opener = useRef(null)
   const refocus = useRef(null)
   const t = transformations[idx]
 
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 767px)')
-    const on = () => setIsSmall(mq.matches)
-    mq.addEventListener('change', on)
-    return () => mq.removeEventListener('change', on)
-  }, [])
-
-  // Paint the photos in whenever the section arrives, the project changes or the view changes.
+  // Brush the photos in when the section arrives, the project changes or the view changes.
   useEffect(() => {
     if (!active) return
     setShown(false)
@@ -59,7 +50,6 @@ export default function ProjectShowcase({ active }) {
     if (i === idx) return
     setShown(false)
     setIdx(i)
-    setSide('before')
   }
   const changeView = (v) => {
     if (v === view) return
@@ -70,15 +60,14 @@ export default function ProjectShowcase({ active }) {
     const d = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key]
     if (!d) return
     e.preventDefault()
-    const n = (idx + d + transformations.length) % transformations.length
+    const btns = [...e.currentTarget.querySelectorAll('button')]
+    const from = Math.max(0, btns.indexOf(e.target.closest('button')))
+    const n = (from + d + btns.length) % btns.length
     choose(n)
-    e.currentTarget.querySelectorAll('button')[n]?.focus()
+    btns[n]?.focus()
   }
 
-  const bothPortrait = ratio(t.before) < 1 && ratio(t.after) < 1
-  const frameRatio = bothPortrait ? 0.76 : isSmall ? 0.8 : 4 / 3
   const split = ratio(t.before) / (ratio(t.before) + ratio(t.after))
-
   const lightboxPhotos = [
     { ...t.before, id: `${t.id}-before`, caption: 'Before', group: t.title },
     { ...t.after, id: `${t.id}-after`, caption: 'After', group: t.title },
@@ -96,7 +85,7 @@ export default function ProjectShowcase({ active }) {
 
   return (
     <div className="exhibit">
-      {/* Project picker */}
+      {/* Project cards */}
       <div role="group" aria-label="Choose a project" className="picker" onKeyDown={onPickerKey}>
         {transformations.map((p, i) => (
           <button
@@ -124,7 +113,18 @@ export default function ProjectShowcase({ active }) {
 
       {/* The photographs */}
       <div id="exhibit-stage" className="exhibit-stage" data-project={t.id} data-view={view}>
-        {view === 'pair' ? (
+        {view === 'slider' ? (
+          <div key={t.id} className={`compare-wrap paint-in ${shown ? 'is-in' : ''}`}>
+            <CompareSlider
+              before={t.before}
+              after={t.after}
+              label={t.title}
+              demo={active && shown && !demoDone}
+              onDemoEnd={() => setDemoDone(true)}
+              className="compare-wide"
+            />
+          </div>
+        ) : (
           <div
             key={t.id}
             className="diptych"
@@ -149,7 +149,7 @@ export default function ProjectShowcase({ active }) {
                   <img
                     src={asset(p.small)}
                     srcSet={srcSet(p)}
-                    sizes={`(min-width: 1024px) ${Math.round(ratio(p) * 36)}rem, ${Math.round((ratio(p) / (ratio(t.before) + ratio(t.after))) * 92)}vw`}
+                    sizes={`(min-width: 1024px) ${Math.round(ratio(p) * 30)}rem, ${Math.round(split * 92)}vw`}
                     alt={p.alt}
                     width={p.w}
                     height={p.h}
@@ -176,78 +176,24 @@ export default function ProjectShowcase({ active }) {
               <path d="M44 32h30m-9-9 10 9-10 9" fill="none" stroke="#fff" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
-        ) : (
-          <div
-            key={t.id}
-            className={`flip paint-in ${shown ? 'is-in' : ''}`}
-            style={{ '--fa': frameRatio }}
-            onClick={() => setSide((s) => (s === 'before' ? 'after' : 'before'))}
-            onTouchStart={(e) => (touch.current = e.touches[0].clientX)}
-            onTouchEnd={(e) => {
-              if (touch.current == null) return
-              const dx = e.changedTouches[0].clientX - touch.current
-              touch.current = null
-              if (Math.abs(dx) > 40) {
-                e.preventDefault()
-                setSide(dx < 0 ? 'after' : 'before')
-              }
-            }}
-          >
-            {[
-              ['before', t.before],
-              ['after', t.after],
-            ].map(([key, p]) => (
-              <div
-                key={key}
-                className={`flip-layer ${key === 'after' ? `paint-mask ${side === 'after' ? 'is-shown' : ''}` : ''}`}
-                data-side={key}
-                aria-hidden={side !== key}
-              >
-                <img className="flip-bg" src={asset(p.small)} alt="" aria-hidden="true" decoding="async" />
-                <img
-                  className="flip-img"
-                  src={asset(p.small)}
-                  srcSet={srcSet(p)}
-                  sizes="(min-width: 1024px) 48rem, 92vw"
-                  alt={p.alt}
-                  width={p.w}
-                  height={p.h}
-                  loading={key === 'after' ? 'lazy' : undefined}
-                  decoding="async"
-                />
-                <span className="tape top-4 left-4" style={{ '--tape-rot': key === 'before' ? '-2.5deg' : '2deg' }}>
-                  {key === 'before' ? 'Before' : 'After'}
-                </span>
-              </div>
-            ))}
-            <div role="group" aria-label="Photo shown" className="flip-toggle" onClick={(e) => e.stopPropagation()}>
-              <button type="button" aria-pressed={side === 'before'} onClick={() => setSide('before')}>
-                Before
-              </button>
-              <button type="button" aria-pressed={side === 'after'} onClick={() => setSide('after')}>
-                After
-              </button>
-            </div>
-          </div>
         )}
       </div>
 
-      {/* Wall label */}
+      {/* Project label */}
       <div className="exhibit-label">
         <p className="sr-only" aria-live="polite">
           Showing {t.title}
-          {view === 'flip' ? `, ${side} photo` : ''}
         </p>
         <h3 key={t.id} className="exhibit-title font-display">
           {t.title}
         </h3>
         <p className="mt-3 text-white/85">{t.summary}</p>
         <div role="group" aria-label="Comparison view" className="view-switch mt-6">
+          <button type="button" aria-pressed={view === 'slider'} onClick={() => changeView('slider')}>
+            Slider
+          </button>
           <button type="button" aria-pressed={view === 'pair'} onClick={() => changeView('pair')}>
             Side by side
-          </button>
-          <button type="button" aria-pressed={view === 'flip'} onClick={() => changeView('flip')}>
-            Before / after
           </button>
         </div>
         <p className="mt-5 text-[0.92rem] leading-relaxed text-white/70">{angleNote}</p>
