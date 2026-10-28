@@ -194,7 +194,23 @@
   gap: 1.75rem;
   grid-template-areas: 'pick' 'stage' 'label';
 }
-.picker { grid-area: pick; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; }
+.picker { grid-area: pick; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.5rem; }
+/* Phones: the four cards become a swipeable row (about three and a bit visible). */
+@media (max-width: 639px) {
+  .picker {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(7.25rem, 30%);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 0.1rem;
+    scrollbar-width: none;
+    padding: 0.1rem 0.1rem 0.3rem;
+  }
+  .picker::-webkit-scrollbar { display: none; }
+  .pick { scroll-snap-align: start; }
+}
 .exhibit-stage { grid-area: stage; min-width: 0; }
 .exhibit-label { grid-area: label; max-width: 34rem; }
 @media (min-width: 1024px) {
@@ -242,6 +258,11 @@
   .pick-title { font-size: 1.14rem; }
   .pick-change { display: block; }
   .pick-text { padding-top: 0.2rem; }
+}
+/* Four cards on narrower desktops: a smaller thumbnail keeps titles to two lines */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .pick { grid-template-columns: 4.25rem 1fr; gap: 0.7rem; }
+  .pick-title { font-size: 1.04rem; }
 }
 
 /* Side by side: a diptych at equal height, each photo in its own proportions */

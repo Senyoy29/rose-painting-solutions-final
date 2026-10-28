@@ -7,7 +7,7 @@ import Lightbox from './Lightbox.jsx'
 import RevealHeading from './RevealHeading.jsx'
 
 /**
- * Real work only: the three confirmed before & after projects, then the five
+ * Real work only: the four confirmed before & after projects, then the five
  * finished-room photos as a filmstrip. Nothing AI-generated appears here.
  */
 export default function RealWork() {
@@ -35,7 +35,7 @@ export default function RealWork() {
           </p>
         </div>
 
-        {/* Before & after: three confirmed projects */}
+        {/* Before & after: four confirmed projects */}
         <div id="before-after" ref={stageRef} className="mt-12">
           <ProjectShowcase active={inView} />
         </div>

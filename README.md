@@ -1,6 +1,6 @@
 # Rose Painting Solutions — website
 
-A fast, single-page site for Rose Painting Solutions in five sections. It opens with “The First Stroke”, where the paintbrush logo paints the homepage's house photograph into view. Then come services and why choose us, real work (three confirmed before & after projects plus five finished rooms), “Imagine the possibilities” (AI concept interiors, clearly labelled), and an FAQ plus contact.
+A fast, single-page site for Rose Painting Solutions in five sections. It opens with “The First Stroke”, where the paintbrush logo paints the homepage's house photograph into view. Then come services and why choose us, real work (four confirmed before & after projects plus five finished rooms), “Imagine the possibilities” (AI concept interiors, clearly labelled), and an FAQ plus contact.
 
 Built with **React 19 + Vite + Tailwind CSS v4**. Animation is hand-built (canvas + CSS + Web Animations) rather than a motion library, so the whole site ships about 78 KB of gzipped JavaScript and has no runtime animation dependencies.
 
@@ -27,22 +27,23 @@ All real photos live in **`public/images/rose-painting/real-work/`**. Each one h
 
 ### Before & after (`src/data/projects.js`)
 
-This file holds **confirmed** pairs only. You confirmed all three:
+This file holds **confirmed** pairs only. You confirmed all four:
 
 | Project | Before | After |
 | --- | --- | --- |
 | Bathroom vanity | photo 11 (`IMG_0326`) → `11-bathroom-vanity-patterned-wall` | photo 10 (`IMG_0325`) → `10-bathroom-vanity-plain-wall` |
 | Room with a high window | `IMG_0330` → `room-project-02-before` | `IMG_0333` → `room-project-02-after` |
 | Room with a wide window | `IMG_0331` → `room-project-03-before` | `IMG_0332` → `room-project-03-after` |
+| Room with built-in shelves | `IMG_0336` → `room-project-04-before` | `IMG_0337` → `room-project-04-after` |
 
-Visitors pick a project from the cards, then compare it two ways:
+Visitors pick a project from the cards (one row of four on larger screens, a swipeable row on phones), then compare it two ways:
 
 - **Slider** (the default): the before photo sits underneath and the after photo is revealed as you drag the paintbrush handle. It works with a mouse, trackpad, touch (a clear sideways swipe, so scrolling the page never moves it) and the keyboard (arrow keys, Page Up/Down, Home/End). It starts at 50% and plays one short sweep the first time it appears, unless reduced motion is on. The frame is 16:9 on larger screens and 4:5 on phones. Each photo is cropped to fit, never stretched; `focus` and `focusM` in `projects.js` set where each crop is centred (desktop and phone).
 - **Side by side**: both photos whole, at equal height, in their own proportions. Select either one to view the pair full screen.
 
 The photos in each pair were taken from slightly different spots, so the views don't line up exactly. Nothing has been warped or edited to make them match, and a note on the page says so.
 
-Each photo has a full-size file, a smaller copy (`-760` or `-800`) and a `-thumb` copy (320×240) for the project picker. The new photos were supplied already optimized; their black screenshot bands were cropped off and nothing in the rooms was changed.
+Each photo has a full-size file, a smaller copy (`-760` or `-800`) and a `-thumb` copy (320×240) for the project picker. The project 2–4 photos came from phone screenshots: the black bands and home bar were cropped off and nothing in the rooms was changed.
 
 To add a project, add a block with `photo(...)` entries for `before` and `after`, plus a `title`, `change` and `summary`. Never add a pair you haven't confirmed. Other photos belong in the portfolio.
 

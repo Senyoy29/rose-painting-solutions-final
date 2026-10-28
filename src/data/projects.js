@@ -109,6 +109,33 @@ export const transformations = [
       '44% 50%',
     ),
   },
+  {
+    id: 'room-project-04',
+    title: 'Room with built-in shelves',
+    change: 'Deep blue to bright white',
+    summary: 'Deep blue walls and a blue support post in a large room with built-in shelves, now bright white throughout.',
+    // Confirmed by the owner: IMG_0336 is BEFORE, IMG_0337 is AFTER.
+    before: photo(
+      'room-project-04-before',
+      1170,
+      1560,
+      760,
+      'Before: large room with deep blue walls, a blue support post, a wall heater, built-in shelves and a worn, stained carpet',
+      '#7b7f8a',
+      '50% 8%',
+      '50% 40%',
+    ),
+    after: photo(
+      'room-project-04-after',
+      1170,
+      1560,
+      760,
+      'After: the same large room with bright white walls and posts, recessed ceiling lights, the wall heater, built-in shelves and a grey carpet, seen from a different angle',
+      '#b8b5ad',
+      '50% 45%',
+      '50% 50%',
+    ),
+  },
 ]
 
 // Shown with every project so the presentation stays honest.

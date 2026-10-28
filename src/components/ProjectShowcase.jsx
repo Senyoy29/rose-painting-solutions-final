@@ -5,7 +5,7 @@ import CompareSlider from './CompareSlider.jsx'
 import Lightbox from './Lightbox.jsx'
 
 /**
- * The three confirmed before & after projects.
+ * The four confirmed before & after projects.
  *  - Project cards on top choose the project.
  *  - Slider (default): drag to reveal the after photo over the before.
  *  - Side by side: both photos whole, at equal height.
