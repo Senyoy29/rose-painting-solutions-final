@@ -1,6 +1,6 @@
 # Rose Painting Solutions — website
 
-A fast, single-page site for Rose Painting Solutions in five sections. It opens with “The First Stroke”, where the paintbrush logo paints the homepage's house photograph into view. Then come services and why choose us, real work (the bathroom before & after plus five finished rooms), “Imagine the possibilities” (AI concept interiors, clearly labelled), and an FAQ plus contact.
+A fast, single-page site for Rose Painting Solutions in five sections. It opens with “The First Stroke”, where the paintbrush logo paints the homepage's house photograph into view. Then come services and why choose us, real work (three confirmed before & after projects plus five finished rooms), “Imagine the possibilities” (AI concept interiors, clearly labelled), and an FAQ plus contact.
 
 Built with **React 19 + Vite + Tailwind CSS v4**. Animation is hand-built (canvas + CSS + Web Animations) rather than a motion library, so the whole site ships about 78 KB of gzipped JavaScript and has no runtime animation dependencies.
 
@@ -23,16 +23,28 @@ The intro plays once per browser session. To see it again, use **Replay intro** 
 
 ## Your photos
 
-All real photos live in **`public/images/rose-painting/real-work/`**. Each one has a full-size file and an `-800` copy for phones.
+All real photos live in **`public/images/rose-painting/real-work/`**. Each one has a full-size file and a smaller copy for phones.
 
 ### Before & after (`src/data/projects.js`)
 
-This file holds **confirmed** pairs only. Right now it has one: the bathroom vanity, with photo 11 (`IMG_0326`) as before and photo 10 (`IMG_0325`) as after, as confirmed by you. The section shows a drag slider and a side-by-side view. It also includes a note that the two photos were taken from different angles, because they don't line up exactly.
+This file holds **confirmed** pairs only. You confirmed all three:
 
-To add another pair, add a block with a `before` and `after` photo. The section shows the first pair; ask if you'd like a project switcher once you have more than one. Tips:
+| Project | Before | After |
+| --- | --- | --- |
+| Bathroom vanity | photo 11 (`IMG_0326`) → `11-bathroom-vanity-patterned-wall` | photo 10 (`IMG_0325`) → `10-bathroom-vanity-plain-wall` |
+| Room with a high window | `IMG_0330` → `room-project-02-before` | `IMG_0333` → `room-project-02-after` |
+| Room with a wide window | `IMG_0331` → `room-project-03-before` | `IMG_0332` → `room-project-03-after` |
 
-- Take both photos from the same spot, at the same height and zoom, so the slider lines up.
-- Never add a pair you haven't confirmed. Other photos belong in the portfolio.
+The photos in each pair were taken from different spots, so the site never lays one over the other. Visitors pick a project, then choose a view:
+
+- **Side by side** (the default on larger screens): both photos at the same height, each in its own proportions. Select either photo to view the pair full screen.
+- **Before / after** (the default on phones): one frame. Tap the After button, tap the photo or swipe to brush the after photo over the before. Each photo is shown whole, never cropped.
+
+A note under the projects explains that the views won't line up exactly.
+
+Each photo has a full-size file, a smaller copy (`-760` or `-800`) and a `-thumb` copy (320×240) for the project picker. The new photos were supplied already optimized; their black screenshot bands were cropped off and nothing in the rooms was changed.
+
+To add a project, add a block with `photo(...)` entries for `before` and `after`, plus a `title`, `change` and `summary`. Never add a pair you haven't confirmed. Other photos belong in the portfolio.
 
 ### Finished rooms (`src/data/portfolio.js`)
 
@@ -114,11 +126,11 @@ src/
     Logo.jsx              logo lockups + BrushMark
     Hero.jsx              full-bleed house photograph, camera push, parallax
     ServicesWhy.jsx       services as a paint-swatch fan + four promises
-    RealWork.jsx          bathroom before & after + finished-rooms filmstrip
+    RealWork.jsx          before & after projects + finished-rooms filmstrip
+    ProjectShowcase.jsx   project picker, side-by-side and before/after views
     Possibilities.jsx     AI concept interiors (clearly labelled)
     Lightbox.jsx          full-screen photo viewer (keyboard, swipe)
     RevealHeading.jsx     headings that rise in as they scroll into view
-    CompareSlider.jsx     draggable comparison (mouse, touch, keyboard)
     Faq.jsx, Contact.jsx, ContactForm.jsx, Footer.jsx
     Header.jsx, MobileCallBar.jsx, BrushEdge.jsx, Icons.jsx
 ```
@@ -133,6 +145,6 @@ src/
 
 **Design system.** Colours: primer `#FBFCFE`, cobalt `#2348D6`, electric cobalt `#3D6BFF`, navy `#0D1F4D`, ice `#E7EFFC`, sky `#BFD3F7`, wash `#EEF3FA`, blue-gray `#5B6888`, painter's-tape blue `#5AA6E8`. Type: Gloock for display, Hanken Grotesk for text.
 
-**Accessibility.** The site has keyboard-operable sliders, accordion and menu, a skip link, visible focus rings, labelled form errors and live regions. The intro is skipped for anyone with “reduce motion” turned on and can be skipped with Esc or the button.
+**Accessibility.** The site has a keyboard-operable project picker (arrow keys work too), accordion and menu, a skip link, visible focus rings, labelled form errors and live regions. The intro is skipped for anyone with “reduce motion” turned on and can be skipped with Esc or the button.
 
 **Performance.** Images are responsive (`srcset`) and lazy-loaded below the fold, with explicit sizes to avoid layout shift. The intro canvas is capped at 1.75× pixel density and is removed from the page when it finishes.

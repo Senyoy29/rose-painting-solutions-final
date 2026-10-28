@@ -1,33 +1,20 @@
-import { useEffect, useState } from 'react'
-import { transformations } from '../data/projects.js'
+import { useState } from 'react'
 import { portfolio } from '../data/portfolio.js'
 import { asset } from '../lib/asset.js'
 import { useInView } from '../hooks/useInView.js'
-import CompareSlider from './CompareSlider.jsx'
+import ProjectShowcase from './ProjectShowcase.jsx'
 import Lightbox from './Lightbox.jsx'
 import RevealHeading from './RevealHeading.jsx'
 
 /**
- * Real work only: the confirmed bathroom before & after, then the five
+ * Real work only: the three confirmed before & after projects, then the five
  * finished-room photos as a filmstrip. Nothing AI-generated appears here.
  */
 export default function RealWork() {
-  const t = transformations[0]
-  const [view, setView] = useState('slider')
-  const [painted, setPainted] = useState(false)
-  const [demoDone, setDemoDone] = useState(false)
   const [openId, setOpenId] = useState(null)
-  const [stageRef, inView] = useInView({ threshold: 0.25 })
+  const [stageRef, inView] = useInView({ threshold: 0.2 })
   const [stripRef, stripIn] = useInView({ threshold: 0.2 })
 
-  useEffect(() => {
-    if (!inView) return
-    const id = requestAnimationFrame(() => setPainted(true))
-    return () => cancelAnimationFrame(id)
-  }, [inView])
-
-  const src = (p) => asset(p.small || p.src)
-  const srcset = (p) => (p.small ? `${asset(p.small)} 800w, ${asset(p.src)} ${p.w}w` : undefined)
   const close = () => {
     const id = openId
     setOpenId(null)
@@ -48,72 +35,9 @@ export default function RealWork() {
           </p>
         </div>
 
-        {/* Before & after */}
-        <div id="before-after" className="mt-12 grid items-center gap-10 lg:grid-cols-[minmax(0,30rem)_minmax(0,1fr)] lg:gap-14">
-          <div ref={stageRef} className="ba-wrap relative mx-auto lg:mx-0">
-            {view === 'slider' && <span aria-hidden="true" className="ba-frame" />}
-            <div className={`paint-in relative ${painted ? 'is-in' : ''}`}>
-              {view === 'slider' ? (
-                inView ? (
-                  <CompareSlider
-                    before={t.before}
-                    after={t.after}
-                    label={t.title}
-                    demo={painted && !demoDone}
-                    onDemoEnd={() => setDemoDone(true)}
-                    sizes="(min-width: 1024px) 30rem, 92vw"
-                    className="ba-photo rounded-[20px]"
-                  />
-                ) : (
-                  <div className="compare ba-photo rounded-[20px]" aria-hidden="true" />
-                )
-              ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    ['Before', t.before, '-2deg'],
-                    ['After', t.after, '2deg'],
-                  ].map(([label, p, rot]) => (
-                    <figure key={label} className="relative">
-                      <img
-                        src={src(p)}
-                        srcSet={srcset(p)}
-                        sizes="(min-width: 1024px) 15rem, 46vw"
-                        alt={p.alt}
-                        width={p.w}
-                        height={p.h}
-                        loading="lazy"
-                        decoding="async"
-                        className="aspect-[3/4] w-full rounded-[16px] object-cover"
-                      />
-                      <figcaption className="tape top-3 left-3" style={{ '--tape-rot': rot }}>
-                        {label}
-                      </figcaption>
-                    </figure>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="max-w-xl">
-            <h3 className="font-display text-[clamp(1.9rem,1.4rem+1.6vw,2.8rem)] leading-[1.05]">
-              Bathroom vanity, before and after.
-            </h3>
-            <p className="mt-4 t-lede text-white/85">
-              {view === 'slider'
-                ? 'Drag across the photo to compare the two stages, or view them side by side.'
-                : 'The two stages side by side. Switch to the slider to compare them in one frame.'}
-            </p>
-            <div role="group" aria-label="Comparison view" className="view-switch mt-7">
-              <button type="button" aria-pressed={view === 'slider'} onClick={() => setView('slider')}>
-                Slider
-              </button>
-              <button type="button" aria-pressed={view === 'side'} onClick={() => setView('side')}>
-                Side by side
-              </button>
-            </div>
-            <p className="mt-5 text-[0.95rem] text-white/75">{t.note}</p>
-          </div>
+        {/* Before & after: three confirmed projects */}
+        <div id="before-after" ref={stageRef} className="mt-12">
+          <ProjectShowcase active={inView} />
         </div>
 
         {/* Finished rooms */}
