@@ -6,6 +6,7 @@ export const reasons = [
   { title: 'Clean when we leave', text: 'A tidy room and a final walk-through with you.' },
 ]
 
+// {phone}, {days} and {time} are filled in from the business settings.
 export const faqs = [
   {
     q: 'Do you offer free quotes?',
@@ -29,10 +30,10 @@ export const faqs = [
   },
   {
     q: 'What are your business hours?',
-    a: 'We’re open Monday to Friday, 9:00 AM to 5:00 PM. You can send an enquiry any time and we’ll reply during business hours.',
+    a: 'We’re open {days}, {time}. You can send an enquiry any time and we’ll reply during business hours.',
   },
   {
     q: 'How do I book?',
-    a: 'Call (330) 614-0776 or send the enquiry form with a few details about your room. We’ll arrange a visit, send your quote and agree a start date that suits you.',
+    a: 'Call {phone} or send the enquiry form with a few details about your room. We’ll arrange a visit, send your quote and agree a start date that suits you.',
   },
 ]

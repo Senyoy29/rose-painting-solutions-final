@@ -3,15 +3,19 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Website for Rose Painting Solutions — interior painting and room restoration.",
+  "description": "Website for Rose Painting Solutions, with an owner dashboard for photos, before & after projects and website text.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "serve": "node server/dev-server.mjs dist 8888 .data",
+    "test": "node --test server/tests/api.test.mjs"
   },
   "dependencies": {
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "@netlify/blobs": "^8.1.0",
+    "@netlify/functions": "^2.8.2"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.11",

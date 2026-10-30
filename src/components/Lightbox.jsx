@@ -114,6 +114,7 @@ export default function Lightbox({ photos, index, onIndex, onClose }) {
         <figcaption className="mt-4 text-center">
           <span className="font-display text-[1.4rem] text-white">{photo.caption}</span>
           <span className="ml-3 text-white/70">{photo.group}</span>
+          {photo.description && <span className="mx-auto mt-2 block max-w-xl text-[0.95rem] text-white/75">{photo.description}</span>}
         </figcaption>
       </figure>
 

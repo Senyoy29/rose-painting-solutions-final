@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { services } from '../data/services.js'
 import { reasons } from '../data/content.js'
+import { text } from '../data/text.js'
 import { BrushTick } from './Icons.jsx'
 import RevealHeading from './RevealHeading.jsx'
 
@@ -17,12 +18,9 @@ export default function ServicesWhy() {
       <div className="shell grid gap-12 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-16">
         <div>
           <RevealHeading id="services-title" className="t-h2 max-w-[13ch] text-ink">
-            Interior painting, done properly.
+            {text.servicesTitle}
           </RevealHeading>
-          <p className="mt-5 measure text-ink-soft">
-            From a single wall refresh to a complete room transformation, every job is quoted for exactly what your
-            room needs.
-          </p>
+          <p className="mt-5 measure text-ink-soft">{text.servicesIntro}</p>
 
           <ul className="mt-10 grid gap-x-8 gap-y-6 sm:grid-cols-2" aria-label="Why choose us">
             {reasons.map((r) => (
@@ -37,6 +35,7 @@ export default function ServicesWhy() {
           </ul>
         </div>
 
+        {services.length > 0 && (
         <ul className="swatch-fan" aria-label="Our services">
           {services.map((s, i) => {
             const isOpen = open === i
@@ -72,6 +71,7 @@ export default function ServicesWhy() {
             )
           })}
         </ul>
+        )}
       </div>
     </section>
   )

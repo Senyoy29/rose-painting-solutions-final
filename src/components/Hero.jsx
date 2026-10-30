@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { business } from '../data/site.js'
 import { heroHouse } from '../data/generated.js'
+import { text } from '../data/text.js'
 import { asset } from '../lib/asset.js'
 import { useReducedMotion } from '../hooks/useReducedMotion.js'
 import { motionTier } from '../lib/motion.js'
@@ -100,22 +101,21 @@ export default function Hero({ revealed }) {
         <div>
           <h1 id="hero-title" tabIndex={-1} className="hero3-title outline-none">
             <span className="line-mask" style={{ '--i': 0 }}>
-              <span>A fresh perspective,</span>
+              <span>{text.heroLine1}</span>
             </span>
             <span className="line-mask" style={{ '--i': 1 }}>
-              <span>room by room.</span>
+              <span>{text.heroLine2}</span>
             </span>
           </h1>
           <p className="rise t-lede mt-6 max-w-[34rem] text-white/90" style={{ '--i': 0 }}>
-            Rose Painting Solutions transforms interior spaces with careful preparation, quality finishes and real
-            attention to detail.
+            {text.heroLede}
           </p>
           <div className="rise mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap" style={{ '--i': 1 }}>
             <a href="#contact" className="btn btn-light">
-              Get a quote
+              {text.ctaPrimary}
             </a>
             <a href="#work" className="btn btn-ghost">
-              Explore our work
+              {text.ctaSecondary}
             </a>
           </div>
         </div>
@@ -126,7 +126,7 @@ export default function Hero({ revealed }) {
           </span>
           <span className="flex flex-col">
             <span className="text-[0.9rem] text-white/85">
-              Call {business.hours.daysShort}, 9 AM–5 PM
+              Call {business.hours.daysShort}, {business.hours.timeShort}
             </span>
             <span className="font-display text-[2rem] leading-none tracking-[-0.01em]">{business.phoneDisplay}</span>
           </span>

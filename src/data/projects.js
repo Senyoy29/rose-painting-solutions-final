@@ -138,6 +138,4 @@ export const transformations = [
   },
 ]
 
-// Shown with every project so the presentation stays honest.
-export const angleNote =
-  'The before and after photos were taken from slightly different spots, so the views won’t line up exactly. Nothing has been warped or edited to match.'
+// The honesty note shown under the projects now lives in data/text.js (angleNote).

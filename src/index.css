@@ -1,4 +1,6 @@
 @import 'tailwindcss';
+/* The owner dashboard (src/admin) has its own plain stylesheet; keep its files out of the public CSS. */
+@source not './admin';
 
 /* ─────────────────────────────────────────────────────────────
    Design tokens — Rose Painting Solutions
@@ -338,7 +340,8 @@
 }
 /* Browsers without container units (pre-2022) fall back to clip-path and left. */
 @supports not (container-type: inline-size) {
-  .compare-after, .compare-after img { transform: none !important; }
+  .compare-after { transform: none !important; }
+  .compare-after img { transform: scale(var(--z, 1)) !important; }
   .compare-after { clip-path: inset(0 0 0 calc(var(--p, 50) * 1%)); }
   .compare-line, .compare-grip { transform: none !important; left: calc(var(--p, 50) * 1%); }
 }
@@ -363,7 +366,11 @@
   /* window slides right, photo inside slides left: a compositor-only reveal edge */
   transform: translate3d(calc(var(--p, 50) * 1cqw), 0, 0);
 }
-.compare-after img { transform: translate3d(calc(var(--p, 50) * -1cqw), 0, 0); }
+.compare-after img { transform: translate3d(calc(var(--p, 50) * -1cqw), 0, 0) scale(var(--z, 1)); }
+/* Owner-set zoom (1–2.5×) scales each photo around its chosen focal point. */
+.compare > img { transform: scale(var(--z, 1)); }
+.compare img { transform-origin: var(--f, 50% 50%); }
+@media (max-width: 767px) { .compare img { transform-origin: var(--fm, var(--f, 50% 50%)); } }
 /* Layers are promoted only while the slider is moving (drag or demo), so they never
    linger as extra GPU memory or appear before they've been drawn. */
 .compare.is-moving .compare-after, .compare.is-moving .compare-after img,
@@ -860,3 +867,26 @@
 @media (hover: hover) and (pointer: fine) {
   [data-motion='high'] .hdr-solid { background: rgb(255 255 255 / 0.88); -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px); }
 }
+
+/* Owner preview banner (only rendered in ?preview mode) */
+.preview-banner {
+  position: fixed;
+  left: 50%;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  max-width: calc(100vw - 2rem);
+  padding: 0.6rem 0.6rem 0.6rem 1.1rem;
+  translate: -50% 0;
+  border-radius: 999px;
+  background: #f5b82e;
+  color: #0d1f4d;
+  font-weight: 650;
+  font-size: 0.92rem;
+  box-shadow: 0 14px 34px -12px rgb(13 31 77 / 0.55);
+}
+.preview-banner a { flex: none; padding: 0.45rem 0.9rem; border-radius: 999px; background: #0d1f4d; color: #fff; }
+
+.exhibit-meta { display: flex; flex-wrap: wrap; gap: 0.35rem 1.1rem; }

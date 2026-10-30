@@ -3,3 +3,6 @@ dist
 .env
 .env.local
 .DS_Store
+# Local test data for the dashboard (server/dev-server.mjs)
+.data
+dist-local

@@ -24,6 +24,8 @@ function CompareSlider({
   before,
   after,
   label,
+  beforeLabel = 'Before',
+  afterLabel = 'After',
   demo = false,
   onDemoEnd,
   sizes = '(min-width: 1024px) 52rem, 92vw',
@@ -188,7 +190,8 @@ function CompareSlider({
   }
 
   const srcset = (p) => (p.small ? `${asset(p.small)} ${p.smallW || 800}w, ${asset(p.src)} ${p.w}w` : undefined)
-  const focus = (p) => ({ '--f': p.focus || '50% 50%', '--fm': p.focusM || p.focus || '50% 50%' })
+  // Framing chosen in the dashboard: crop position (desktop / phone) and zoom.
+  const focus = (p) => ({ '--f': p.focus || '50% 50%', '--fm': p.focusM || p.focus || '50% 50%', '--z': p.zoom || 1 })
 
   return (
     <div
@@ -235,7 +238,7 @@ function CompareSlider({
       </div>
 
       <span ref={tapeB} className="tape compare-tape top-4 left-4 md:top-5 md:left-5" data-hidden="false" aria-hidden="true">
-        Before
+        {beforeLabel}
       </span>
       <span
         ref={tapeA}
@@ -244,7 +247,7 @@ function CompareSlider({
         data-hidden="false"
         aria-hidden="true"
       >
-        After
+        {afterLabel}
       </span>
 
       <span className="compare-line" aria-hidden="true" />

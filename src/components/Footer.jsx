@@ -1,5 +1,15 @@
 import { business, nav } from '../data/site.js'
 import Logo from './Logo.jsx'
+import { text } from '../data/text.js'
+
+const SOCIAL = [
+  ['facebook', 'Facebook'],
+  ['instagram', 'Instagram'],
+  ['google', 'Google'],
+  ['nextdoor', 'Nextdoor'],
+  ['yelp', 'Yelp'],
+  ['website', 'Website'],
+]
 
 export default function Footer({ onReplayIntro, inert = false }) {
   const year = new Date().getFullYear()
@@ -26,12 +36,28 @@ export default function Footer({ onReplayIntro, inert = false }) {
             <p className="mt-1.5 text-[0.92rem] text-white/70">
               {business.hours.days}, {business.hours.time}
             </p>
+            {business.email && (
+              <a href={`mailto:${business.email}`} className="mt-1.5 block text-[0.92rem] text-white/80 hover:text-white">
+                {business.email}
+              </a>
+            )}
           </div>
         </div>
         <div className="mt-10 flex flex-col gap-2 border-t border-white/10 pt-6 text-[0.88rem] text-white/60 sm:flex-row sm:justify-between">
           <p>
-            © {year} {business.name}. Interior painting and room transformations.
+            © {year} {business.name}. {text.footerDescription}
           </p>
+          {SOCIAL.some(([k]) => business.social?.[k]) && (
+            <ul className="flex flex-wrap gap-x-5 gap-y-1" aria-label="Social media">
+              {SOCIAL.filter(([k]) => business.social?.[k]).map(([k, label]) => (
+                <li key={k}>
+                  <a href={business.social[k]} target="_blank" rel="noopener noreferrer" className="inline-block py-2 hover:text-white">
+                    {label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
           <div className="flex gap-6">
             {onReplayIntro && (
               <button type="button" onClick={onReplayIntro} className="inline-block py-2 hover:text-white">

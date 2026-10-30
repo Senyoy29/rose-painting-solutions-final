@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { transformations, angleNote } from '../data/projects.js'
+import { transformations } from '../data/projects.js'
+import { text } from '../data/text.js'
 import { asset } from '../lib/asset.js'
 import CompareSlider from './CompareSlider.jsx'
 import Lightbox from './Lightbox.jsx'
@@ -42,7 +43,7 @@ export default function ProjectShowcase({ active }) {
   const [openAt, setOpenAt] = useState(null)
   const opener = useRef(null)
   const refocus = useRef(null)
-  const t = transformations[idx]
+  const t = transformations[Math.min(idx, transformations.length - 1)]
 
   // Brush the photos in when the section arrives, the project changes or the view changes.
   useEffect(() => {
@@ -85,11 +86,13 @@ export default function ProjectShowcase({ active }) {
     btns[n]?.focus()
   }
 
-  const split = ratio(t.before) / (ratio(t.before) + ratio(t.after))
-  const lightboxPhotos = [
-    { ...t.before, id: `${t.id}-before`, caption: 'Before', group: t.title },
-    { ...t.after, id: `${t.id}-after`, caption: 'After', group: t.title },
-  ]
+  const split = t ? ratio(t.before) / (ratio(t.before) + ratio(t.after)) : 0.5
+  const lightboxPhotos = t
+    ? [
+        { ...t.before, id: `${t.id}-before`, caption: text.beforeLabel, group: t.title },
+        { ...t.after, id: `${t.id}-after`, caption: text.afterLabel, group: t.title },
+      ]
+    : []
   const closeLightbox = () => {
     refocus.current = opener.current
     setOpenAt(null)
@@ -101,6 +104,7 @@ export default function ProjectShowcase({ active }) {
     refocus.current = null
   }, [openAt])
 
+  if (!t) return null
   return (
     <div className="exhibit">
       {/* Project cards */}
@@ -137,6 +141,8 @@ export default function ProjectShowcase({ active }) {
               before={t.before}
               after={t.after}
               label={t.title}
+              beforeLabel={text.beforeLabel}
+              afterLabel={text.afterLabel}
               demo={active && shown && !demoDone}
               onDemoEnd={() => setDemoDone(true)}
               className="compare-wide"
@@ -149,16 +155,16 @@ export default function ProjectShowcase({ active }) {
             style={{ '--ab': ratio(t.before), '--aa': ratio(t.after), '--split': split, gridTemplateColumns: `${ratio(t.before)}fr ${ratio(t.after)}fr` }}
           >
             {[
-              ['Before', t.before, '-2.5deg'],
-              ['After', t.after, '2deg'],
-            ].map(([label, p, rot], i) => (
-              <figure key={label} className="dip" data-side={label.toLowerCase()}>
+              [text.beforeLabel, t.before, '-2.5deg', 'before'],
+              [text.afterLabel, t.after, '2deg', 'after'],
+            ].map(([label, p, rot, side], i) => (
+              <figure key={side} className="dip" data-side={side}>
                 <button
                   type="button"
                   className={`dip-frame paint-in ${shown ? 'is-in' : ''}`}
                   style={{ '--d': `${i * 260}ms`, background: p.tone, aspectRatio: `${p.w} / ${p.h}` }}
                   data-photo-id={lightboxPhotos[i].id}
-                  aria-label={`Enlarge the ${label.toLowerCase()} photo`}
+                  aria-label={`Enlarge the ${side} photo`}
                   onClick={() => {
                     opener.current = lightboxPhotos[i].id
                     setOpenAt(i)
@@ -205,7 +211,13 @@ export default function ProjectShowcase({ active }) {
         <h3 key={t.id} className="exhibit-title font-display">
           {t.title}
         </h3>
-        <p className="mt-3 text-white/85">{t.summary}</p>
+        {t.summary && <p className="mt-3 text-white/85">{t.summary}</p>}
+        {(t.service || t.location) && (
+          <p className="exhibit-meta mt-3 text-[0.92rem] text-white/70">
+            {t.service && <span>{t.service}</span>}
+            {t.location && <span>{t.location}</span>}
+          </p>
+        )}
         <div role="group" aria-label="Comparison view" className="view-switch mt-6">
           <button type="button" aria-pressed={view === 'slider'} onClick={() => changeView('slider')}>
             Slider
@@ -214,7 +226,7 @@ export default function ProjectShowcase({ active }) {
             Side by side
           </button>
         </div>
-        <p className="mt-5 text-[0.92rem] leading-relaxed text-white/70">{angleNote}</p>
+        {text.angleNote && <p className="mt-5 text-[0.92rem] leading-relaxed text-white/70">{text.angleNote}</p>}
       </div>
 
       {openAt !== null && (

@@ -52,7 +52,10 @@ export default function Faq() {
                 <div id={`${id}-panel`} role="region" aria-labelledby={`${id}-btn`} className="faq-panel" data-open={isOpen} inert={!isOpen}>
                   <div>
                     <p className="max-w-[60ch] pb-7 text-ink-soft">
-                      {f.a}
+                      {f.a
+                        .replace('{phone}', business.phoneDisplay)
+                        .replace('{days}', business.hours.days)
+                        .replace('{time}', business.hours.time)}
                     </p>
                   </div>
                 </div>

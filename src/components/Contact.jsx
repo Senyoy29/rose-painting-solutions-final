@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { business } from '../data/site.js'
+import { text } from '../data/text.js'
 import { isOpenNow } from '../lib/hours.js'
 import { ClockIcon, PhoneIcon } from './Icons.jsx'
 import BrushEdge from './BrushEdge.jsx'
@@ -20,10 +21,10 @@ export default function Contact() {
       <div className="shell relative z-10 grid gap-12 pt-12 pb-20 md:pb-24 lg:grid-cols-[0.95fr_1.05fr] lg:gap-16 lg:pt-16">
         <div>
           <RevealHeading id="contact-title" className="t-h2 max-w-[12ch]">
-            Let’s talk about your room.
+            {text.contactTitle}
           </RevealHeading>
           <p className="mt-6 measure t-lede text-white/85">
-            Call for a quick chat, or send a few details and we’ll arrange a free quote at a time that suits you.
+            {text.contactIntro}
           </p>
 
           <a
@@ -57,10 +58,34 @@ export default function Contact() {
             <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 whitespace-nowrap text-white/85">
               <dt>{business.hours.days}</dt>
               <dd className="whitespace-nowrap text-right font-semibold text-white">{business.hours.time}</dd>
-              <dt>Saturday–Sunday</dt>
-              <dd className="text-right">Closed</dd>
+              {business.hours.closed && (
+                <>
+                  <dt>{business.hours.closed}</dt>
+                  <dd className="text-right">Closed</dd>
+                </>
+              )}
             </dl>
           </div>
+
+          {(business.email || business.serviceArea || business.instructions) && (
+            <div className="mt-6 grid max-w-md gap-4 text-white/85">
+              {business.email && (
+                <p>
+                  <span className="block text-[0.9rem] text-white/70">Email</span>
+                  <a href={`mailto:${business.email}`} className="font-semibold text-white underline underline-offset-4">
+                    {business.email}
+                  </a>
+                </p>
+              )}
+              {business.serviceArea && (
+                <p>
+                  <span className="block text-[0.9rem] text-white/70">Areas we cover</span>
+                  {business.serviceArea}
+                </p>
+              )}
+              {business.instructions && <p className="whitespace-pre-line">{business.instructions}</p>}
+            </div>
+          )}
         </div>
 
         <div className="relative rounded-[24px] bg-white p-6 text-ink shadow-[0_50px_100px_-50px_rgb(5_14_45/0.9)] sm:p-9">

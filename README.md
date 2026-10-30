@@ -2,6 +2,8 @@
 
 A fast, single-page site for Rose Painting Solutions in five sections. It opens with “The First Stroke”, where the paintbrush logo paints the homepage's house photograph into view. Then come services and why choose us, real work (four confirmed before & after projects plus five finished rooms), “Imagine the possibilities” (AI concept interiors, clearly labelled), and an FAQ plus contact.
 
+**Owner dashboard:** the business owner manages photos, before & after projects, website text, services and business details at **`/admin`**, from a phone or computer, without a developer. See **[docs/OWNER-GUIDE.md](docs/OWNER-GUIDE.md)** (for the owner) and **[docs/TECHNICAL-GUIDE.md](docs/TECHNICAL-GUIDE.md)** (setup, environment variables, costs, backups, security).
+
 Built with **React 19 + Vite + Tailwind CSS v4**. Animation is hand-built (canvas + CSS + Web Animations) rather than a motion library, so the whole site ships about 78 KB of gzipped JavaScript and has no runtime animation dependencies.
 
 ---
@@ -71,9 +73,12 @@ The free tool [Squoosh](https://squoosh.app) works well: resize to 800px wide an
 
 ## Edit text, phone and hours
 
+Once the dashboard is set up, the owner edits these in **/admin** and publishes; no code changes or deploys are needed. The files below are the built-in defaults (what the site shows before anything is published, or if the content service can't be reached).
+
 | What | Where |
 | --- | --- |
 | Phone, hours, business name | `src/data/site.js` |
+| Headings, hero text, buttons, labels | `src/data/text.js` |
 | Services (paint chip cards) | `src/data/services.js` |
 | Why-choose-us points, process steps, FAQ | `src/data/content.js` |
 | Testimonials (real ones only, hidden while empty) | `testimonials` in `src/data/site.js` |
@@ -152,8 +157,14 @@ Where the speed comes from:
 ## How it's put together
 
 ```
+admin/index.html          the owner dashboard page (/admin/)
+netlify/functions/api.mjs the content & photo API on Netlify (uses Netlify Blobs)
+server/                   API logic, sign-in, upload checks, storage adapters, tests, local server
+docs/                     owner guide + technical guide
 src/
   App.jsx                 page order + intro orchestration
+  content/                content model: validation, defaults, public view, loader
+  admin/                  the owner dashboard (own bundle and stylesheet)
   index.css               design tokens (colours, type) + component styles
   data/                   ← everything you'd normally edit
   components/
