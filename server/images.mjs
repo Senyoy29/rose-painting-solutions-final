@@ -6,7 +6,9 @@
 
 /** Per-variant limits: bytes and longest edge in pixels. */
 export const VARIANT_LIMITS = {
-  master: { bytes: 5_800_000, edge: 4096 },
+  // Netlify Functions accept at most 6 MB per request, and binary bodies may be
+  // base64-encoded on the way in (+33%), so keep every upload under ~4.5 MB.
+  master: { bytes: 4_400_000, edge: 4096 },
   lg: { bytes: 3_000_000, edge: 2400 },
   md: { bytes: 1_200_000, edge: 1400 },
   thumb: { bytes: 300_000, edge: 800 },

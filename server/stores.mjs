@@ -9,14 +9,45 @@
 // Production: Netlify Blobs (durable, per site, separate from deploys —
 // redeploying the site never touches it). Local development and tests:
 // a folder on disk, or memory.
+//
+// IMPORTANT — test copies. Netlify's site-wide Blobs stores are shared by
+// EVERY deploy (production, Deploy Previews, branch deploys). So anything
+// that isn't the production website uses its own stores with a "preview-"
+// prefix (preview-rps-content, …): a Deploy Preview starts from the
+// original website, has its own password, and can never change or delete
+// the live website's photos, projects, settings or sign-in.
 // ─────────────────────────────────────────────────────────────
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
 export const STORE_NAMES = { content: 'rps-content', auth: 'rps-auth', media: 'rps-media' }
+export const DATA_ENVS = ['production', 'preview']
+
+/** Store names for a data environment ('production' or 'preview'). */
+export function storeNames(dataEnv) {
+  if (!DATA_ENVS.includes(dataEnv)) throw new Error(`Unknown data environment: ${dataEnv}`)
+  const prefix = dataEnv === 'production' ? '' : 'preview-'
+  return Object.fromEntries(Object.entries(STORE_NAMES).map(([k, v]) => [k, prefix + v]))
+}
+
+/**
+ * Which data the request may use. Fail-safe: only a request that Netlify
+ * says is running on the PRODUCTION deploy gets the live data; everything
+ * else (deploy-preview, branch-deploy, dev, unknown) gets the test copy.
+ *   RPS_DATA_ENV=preview     forces the test copy (never the reverse while
+ *                            Netlify reports a non-production context)
+ *   RPS_DATA_ENV=production  only used when Netlify reports no context
+ */
+export function resolveDataEnv(deployContext, env = {}) {
+  if (env.RPS_DATA_ENV === 'preview') return 'preview'
+  if (deployContext) return deployContext === 'production' ? 'production' : 'preview'
+  return env.RPS_DATA_ENV === 'production' ? 'production' : 'preview'
+}
 
 /** Netlify Blobs. `getStore` comes from the '@netlify/blobs' package. */
-export function netlifyStores(getStore) {
+export function netlifyStores(getStore, { dataEnv } = {}) {
+  if (!DATA_ENVS.includes(dataEnv)) throw new Error('netlifyStores needs dataEnv: "production" or "preview"')
+  const names = storeNames(dataEnv)
   const wrap = (name) => {
     const s = getStore({ name, consistency: 'strong' })
     return {
@@ -36,7 +67,7 @@ export function netlifyStores(getStore) {
       },
     }
   }
-  return { content: wrap(STORE_NAMES.content), auth: wrap(STORE_NAMES.auth), media: wrap(STORE_NAMES.media) }
+  return { content: wrap(names.content), auth: wrap(names.auth), media: wrap(names.media) }
 }
 
 /** A folder on disk — survives restarts, like Blobs survives redeploys. */

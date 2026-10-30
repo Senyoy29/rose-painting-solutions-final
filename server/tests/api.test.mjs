@@ -1,4 +1,4 @@
-// Backend tests — run with:  node --test server/tests/
+// Backend tests — run with:  npm test
 // Uses an in-memory or temporary-folder store and synthetic test images;
 // no real photos or live storage are touched.
 import test from 'node:test'
@@ -526,4 +526,59 @@ test('a live photo’s files can’t be overwritten; the development cookie only
   const value = t.jar.cookie.split('=').slice(1).join('=')
   t.jar.cookie = `rps_session=${value}`
   assert.equal((await t.call('GET', '/api/admin/draft')).status, 401)
+})
+
+// ── Deploy Preview isolation (store naming) ──
+test('only the production deploy uses the live stores; everything else gets the test copy', async () => {
+  const { resolveDataEnv, storeNames, netlifyStores } = await import('../stores.mjs')
+  assert.equal(resolveDataEnv('production', {}), 'production')
+  for (const ctx of ['deploy-preview', 'branch-deploy', 'dev', 'preview-server', 'something-new']) {
+    assert.equal(resolveDataEnv(ctx, {}), 'preview', ctx)
+    assert.equal(resolveDataEnv(ctx, { RPS_DATA_ENV: 'production' }), 'preview', `${ctx} can't be promoted`)
+  }
+  assert.equal(resolveDataEnv('', {}), 'preview', 'unknown context is treated as a preview')
+  assert.equal(resolveDataEnv(undefined, { RPS_DATA_ENV: 'production' }), 'production')
+  assert.equal(resolveDataEnv('production', { RPS_DATA_ENV: 'preview' }), 'preview')
+  assert.deepEqual(storeNames('production'), { content: 'rps-content', auth: 'rps-auth', media: 'rps-media' })
+  assert.deepEqual(storeNames('preview'), { content: 'preview-rps-content', auth: 'preview-rps-auth', media: 'preview-rps-media' })
+  for (const n of Object.values(storeNames('preview'))) assert.ok(Buffer.byteLength(n) < 64)
+  const opened = []
+  netlifyStores((o) => (opened.push(o), {}), { dataEnv: 'preview' })
+  assert.deepEqual(opened.map((o) => o.name), ['preview-rps-content', 'preview-rps-auth', 'preview-rps-media'])
+  assert.ok(opened.every((o) => o.consistency === 'strong'))
+  assert.throws(() => netlifyStores(() => ({})), /dataEnv/, 'no silent default to live data')
+})
+
+test('health reports which data the API is using', async () => {
+  const app = createApp({ stores: memoryStores(), env: ENV, dataEnv: 'preview' })
+  const r = await app(new Request(ORIGIN + '/api/health'))
+  assert.deepEqual(await r.json(), { ok: true, dashboard: true, dataEnv: 'preview' })
+})
+
+test('expired sessions and old wrong-password records are tidied up on sign-in', async () => {
+  const t = setup()
+  await t.signIn()
+  // A stale session from a lost phone, and an old failed attempt from another connection
+  await t.call('POST', '/api/admin/logout', {})
+  await t.call('POST', '/api/admin/login', { password: 'wrong-password-1' }, { ip: '198.51.100.7' })
+  await t.call('POST', '/api/admin/login', { password: 'Brushes-and-Rollers-2026' })
+  t.jar.cookie = ''
+  t.jar.csrf = ''
+  assert.equal((await t.stores.auth.list('sessions/')).length, 1)
+  assert.ok((await t.stores.auth.list('rl/')).length >= 1)
+  t.tick(SESSION.maxMs + 1000)
+  await t.call('POST', '/api/admin/login', { password: 'Brushes-and-Rollers-2026' })
+  assert.equal((await t.stores.auth.list('sessions/')).length, 1, 'only the new session remains')
+  assert.deepEqual((await t.stores.auth.list('rl/')).filter((k) => k !== 'rl/global'), [])
+})
+
+test('opening hours read naturally, weeks running Monday to Sunday', async () => {
+  const { formatHours } = await import('../../src/content/schema.js')
+  const f = (openDays) => formatHours({ openDays, openHour: 9, closeHour: 17 })
+  assert.deepEqual([f([1, 2, 3, 4, 5]).days, f([1, 2, 3, 4, 5]).closed], ['Monday–Friday', 'Saturday–Sunday'], 'matches the original website')
+  assert.equal(f([1, 2, 3, 4, 5]).timeShort, '9 AM–5 PM')
+  assert.equal(f([1, 2, 3, 4, 5, 6]).closed, 'Sunday')
+  assert.equal(f([1, 3, 5]).days, 'Monday, Wednesday, Friday')
+  assert.equal(f([0, 1, 2, 3, 4, 5, 6]).days, 'Every day')
+  assert.equal(f([0, 1, 2, 3, 4, 5, 6]).closed, '')
 })

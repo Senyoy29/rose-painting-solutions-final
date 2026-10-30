@@ -170,8 +170,35 @@ export function createAuth({ store, env, now = () => Date.now() }) {
       return { status: 401, error: 'That password isn’t right. Please try again.' }
     }
     await clearFailures(ip)
+    await pruneStale().catch(() => {})
     const s = await createSession({ mustChange, epoch: pw?.epoch || 0 })
     return { status: 200, session: s, cookie: cookieHeader(req, s.sid, Math.round(SESSION.maxMs / 1000)) }
+  }
+
+  /**
+   * Tidy-up on each successful sign-in, so storage never grows without limit:
+   * removes expired sessions and finished wrong-password records.
+   */
+  async function pruneStale(maxDeletes = 200) {
+    const t = now()
+    let deleted = 0
+    for (const k of await store.list('sessions/')) {
+      if (deleted >= maxDeletes) return
+      const rec = await store.getJSON(k)
+      if (!rec || t - rec.created > SESSION.maxMs || t - rec.lastSeen > SESSION.idleMs) {
+        await store.delete(k)
+        deleted++
+      }
+    }
+    for (const k of await store.list('rl/')) {
+      if (deleted >= maxDeletes) return
+      const rec = await store.getJSON(k)
+      const active = rec && ((rec.lockedUntil || 0) > t || (rec.fails || []).some((x) => t - x < LIMITS.windowMs))
+      if (!active) {
+        await store.delete(k)
+        deleted++
+      }
+    }
   }
 
   async function logout(req, session) {

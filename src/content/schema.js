@@ -109,12 +109,14 @@ function to12(h) {
   return { long: `${h12}:${String(mm).padStart(2, '0')} ${ap}`, short: mm ? `${h12}:${String(mm).padStart(2, '0')} ${ap}` : `${h12} ${ap}` }
 }
 function dayRanges(days, names) {
-  const set = [...new Set(days)].filter((d) => d >= 0 && d <= 6).sort((a, b) => a - b)
+  // Weeks run Monday → Sunday, so a closed weekend reads "Saturday–Sunday".
+  const pos = (d) => (d + 6) % 7
+  const set = [...new Set(days)].filter((d) => d >= 0 && d <= 6).sort((a, b) => pos(a) - pos(b))
   const out = []
   for (let i = 0; i < set.length; i++) {
     let j = i
-    while (j + 1 < set.length && set[j + 1] === set[j] + 1) j++
-    out.push(j - i >= 2 ? `${names[set[i]]}–${names[set[j]]}` : set.slice(i, j + 1).map((d) => names[d]).join(', '))
+    while (j + 1 < set.length && pos(set[j + 1]) === pos(set[j]) + 1) j++
+    out.push(j > i ? `${names[set[i]]}–${names[set[j]]}` : names[set[i]])
     i = j
   }
   return out.join(', ')
@@ -126,8 +128,8 @@ export function formatHours(h) {
   const a = to12(h.openHour)
   const b = to12(h.closeHour)
   return {
-    days: dayRanges(open, DAY_NAMES) || 'By appointment',
-    daysShort: dayRanges(open, DAY_SHORT) || 'By appt.',
+    days: open.length === 7 ? 'Every day' : dayRanges(open, DAY_NAMES) || 'By appointment',
+    daysShort: open.length === 7 ? 'Every day' : dayRanges(open, DAY_SHORT) || 'By appt.',
     time: `${a.long} – ${b.long}`,
     timeShort: `${a.short}–${b.short}`,
     closed: dayRanges(closedDays, DAY_NAMES),

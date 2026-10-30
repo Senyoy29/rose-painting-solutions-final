@@ -102,7 +102,7 @@ If you use a service other than Formspree, also add its domain to `connect-src` 
 
 ## Deploy
 
-Any static host works. The build uses relative paths, so it also runs from a sub-folder.
+Any static host works for the public website. The build uses relative paths, so it also runs from a sub-folder. The **owner dashboard needs Netlify** (a Netlify Function plus Netlify Blobs); see [docs/TECHNICAL-GUIDE.md](docs/TECHNICAL-GUIDE.md#deploying) for the preview-first deploy steps. Deploy Previews automatically use a separate test copy of the dashboard data, so testing one never touches the live website.
 
 - **Netlify / Cloudflare Pages:** build command `npm run build`, publish folder `dist`. Security headers come from `public/_headers`.
 - **Vercel:** import the project; headers come from `vercel.json`.

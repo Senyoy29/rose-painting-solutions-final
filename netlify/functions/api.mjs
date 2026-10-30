@@ -1,21 +1,31 @@
-// Netlify Function: the content & photo API (see server/app.mjs).
-// Storage is Netlify Blobs — durable and separate from deploys.
+// Netlify Function: the content & photo API behind /api/* and /media/*.
+//
+// Production and test deploys get SEPARATE data (see server/stores.mjs):
+// a Deploy Preview can never change or delete the live website's photos,
+// projects, settings or password.
 import { getStore } from '@netlify/blobs'
 import { purgeCache } from '@netlify/functions'
 import { createApp } from '../../server/app.mjs'
-import { netlifyStores } from '../../server/stores.mjs'
+import { netlifyStores, resolveDataEnv, storeNames } from '../../server/stores.mjs'
 
-let app
-export default async (req, context) => {
-  app ||= createApp({
-    stores: netlifyStores(getStore),
+const apps = {}
+
+function appFor(dataEnv) {
+  return (apps[dataEnv] ||= createApp({
+    stores: netlifyStores(getStore, { dataEnv }),
     env: process.env,
-    // On publish, drop the CDN's cached copy of /api/content so the change shows at once.
-    purgeContentCache: () => purgeCache({ tags: ['rps-content'] }),
-  })
-  return app(req, { ip: context?.ip })
+    dataEnv,
+    // The content tag differs per data environment, so publishing on a
+    // preview only refreshes the preview's cached content.
+    contentCacheTag: storeNames(dataEnv).content,
+    purgeContentCache: () => purgeCache({ tags: [storeNames(dataEnv).content] }),
+  }))
 }
 
-export const config = {
-  path: ['/api/*', '/media/*'],
+export default async (req, context) => {
+  const deployContext = context?.deploy?.context || globalThis.Netlify?.context?.deploy?.context || ''
+  const dataEnv = resolveDataEnv(deployContext, process.env)
+  return appFor(dataEnv)(req, { ip: context?.ip })
 }
+
+export const config = { path: ['/api/*', '/media/*'] }

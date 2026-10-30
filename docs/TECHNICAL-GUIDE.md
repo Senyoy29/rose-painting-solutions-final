@@ -10,11 +10,32 @@ Browser ─┬─ /            public site (React, static, CDN)
          ├─ /admin/      owner dashboard (separate bundle, plain CSS — never loaded by visitors)
          └─ /api/*, /media/*  →  netlify/functions/api.mjs  →  server/app.mjs
                                         │
-                                        └─ Netlify Blobs (3 stores, durable, independent of deploys)
-                                             rps-content  draft, published, history/<ts>
-                                             rps-auth     password hash, sessions/<id>, rl/<hash>
-                                             rps-media    m/<id>/<rev>/{master,lg,md,thumb}
+                                        └─ Netlify Blobs (durable, independent of deploys)
+                                             LIVE WEBSITE (production deploy only)
+                                               rps-content  draft, published, history/<ts>
+                                               rps-auth     password hash, sessions/<id>, rl/<hash>
+                                               rps-media    m/<id>/<rev>/{master,lg,md,thumb}
+                                             TEST COPY (Deploy Previews, branch deploys, anything else)
+                                               preview-rps-content, preview-rps-auth, preview-rps-media
 ```
+
+### Production and Deploy Previews never share data
+
+Netlify's site-wide Blobs stores (`getStore`) are shared by **every** deploy of the site: production, Deploy Previews and branch deploys. Left alone, testing a preview would edit, publish or delete the live website's photos, projects, settings and password.
+
+So the function picks its stores per request (`netlify/functions/api.mjs` → `resolveDataEnv` in `server/stores.mjs`):
+
+| Netlify deploy context | Data used | Stores |
+|---|---|---|
+| `production` | live website | `rps-content`, `rps-auth`, `rps-media` |
+| `deploy-preview`, `branch-deploy`, `dev`, anything else, or no context | test copy | `preview-rps-*` |
+
+- **Fail-safe:** only a request Netlify reports as running on the production deploy gets live data. `RPS_DATA_ENV=production` can't promote a preview; `RPS_DATA_ENV=preview` forces the test copy everywhere (useful if you ever need to freeze the live data).
+- **A preview starts from the original website**, has its own password (first sign-in uses the preview's `ADMIN_INITIAL_PASSWORD`), and can only purge its own CDN cache tag (`preview-rps-content`).
+- **All previews share one test copy.** That's fine for one developer; just don't expect a fresh copy per pull request.
+- **Production stays on site-wide stores**, not `getDeployStore`, because deploy stores are removed with their deploy. Site-wide stores persist across every redeploy.
+- **Check which data a deploy uses:** `GET /api/health` returns `"dataEnv": "production"` or `"preview"`, and the dashboard shows a yellow **Test copy** notice on previews.
+- Proven by `server/tests/netlify-function.test.mjs`, which runs the real function with the real `@netlify/blobs` and `@netlify/functions` packages against Netlify's local Blobs server.
 
 **Why this design (and not Cloudinary / R2):**
 
@@ -28,7 +49,7 @@ Browser ─┬─ /            public site (React, static, CDN)
 **Image pipeline:**
 
 - **Where it happens:** photos are decoded, resized and re-encoded **in the owner's browser** (`src/admin/images.js`), never on the server.
-  - Every upload stays well under the 6 MB function body limit, so signed direct uploads aren't needed.
+  - Every upload stays under ~4.5 MB (the private master is capped at 4.2 MB), safely below the 6 MB Netlify Functions request limit even if the body is base64-encoded, so signed direct uploads aren't needed.
   - No server image processing means no server image-processing abuse.
   - Re-encoding drops **all EXIF/GPS metadata**.
 - **Sizes stored:**
@@ -74,20 +95,30 @@ Browser ─┬─ /            public site (React, static, CDN)
 | `SESSION_SECRET` | yes | 32+ random characters. `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`. Changing it signs everyone out. |
 | `ADMIN_INITIAL_PASSWORD` | yes, for first sign-in | 12+ characters, random. The owner must replace it at first sign-in; after that it stops working. |
 | `ADMIN_PASSWORD_RESET` | no | `yes` lets `ADMIN_INITIAL_PASSWORD` work again (forgotten password). **Remove after use.** |
+| `RPS_DATA_ENV` | no | Leave unset. `preview` forces every deploy onto the test copy. |
 | `VITE_FORM_ENDPOINT` | as before | Contact form endpoint (public). Unrelated to the dashboard. |
 
 Mark `SESSION_SECRET` and `ADMIN_INITIAL_PASSWORD` as **secret** in Netlify, and scope them to **Functions** only, not Builds. Never commit real values; `.env.example` lists the names only.
+
+**Use different values per deploy context.** In Netlify, each variable can have a value per context ("Different value for each deploy context"). Give **Production** its own `SESSION_SECRET` and `ADMIN_INITIAL_PASSWORD`, and give **Deploy Previews** (and **Branch deploys**, if you use them) different ones. Then a preview cookie can never be valid on production, and the preview's initial password is useless on the live site. (The data is already separate; this keeps the secrets separate too.)
 
 Without `SESSION_SECRET`, the dashboard stays switched off (it shows a friendly message), and the public site keeps working.
 
 ## Deploying
 
-1. Merge the dashboard branch into `main` (or deploy the branch first as a preview).
-2. In Netlify, add the environment variables above.
-3. Push. Netlify runs `npm run build` (Vite builds `index.html` and `admin/index.html` into `dist/`) and deploys `netlify/functions/api.mjs`.
-4. Open `https://<site>/api/health`. It should report `{"ok":true,"dashboard":true}`.
-5. Open `https://<site>/admin/`, sign in with the initial password, choose a password, then sign out.
-6. Hand over access (below).
+**Preview first.**
+
+1. In Netlify, add the **Deploy Previews** values for `SESSION_SECRET` and `ADMIN_INITIAL_PASSWORD` (see above). Production values can wait.
+2. Push the branch and open a pull request against `main`. Netlify builds a Deploy Preview: `npm run build` (Vite builds `index.html` and `admin/index.html` into `dist/`) plus `netlify/functions/api.mjs`.
+3. Check it: `npm run smoke -- https://deploy-preview-<n>--<site>.netlify.app preview`. It's read-only; `/api/health` must say `"dataEnv":"preview"`.
+4. Try the dashboard on the preview (yellow **Test copy** notice): sign in, upload, edit, publish, remove. Nothing reaches the live site.
+
+**Then production.**
+
+5. Add the **Production** values for both variables.
+6. Merge the pull request. Netlify deploys production.
+7. `npm run smoke -- https://<your-domain> production` (`"dataEnv":"production"`).
+8. Open `https://<site>/admin/`, sign in with the production initial password, choose a password, then sign out. Hand over access (below).
 
 **No deploys are needed for content changes.** The owner's publishing doesn't trigger builds, so it uses no build minutes or deploy credits.
 
@@ -98,12 +129,24 @@ npm install
 npm run build                  # builds dist/ (site + dashboard)
 SESSION_SECRET=dev-only-secret-at-least-32-characters-long \
 ADMIN_INITIAL_PASSWORD=dev-initial-password npm run serve   # http://localhost:8888, data in ./.data
-npm test                       # backend tests (node --test, no network, no real photos)
+npm test                       # backend tests + the real Netlify Function against Netlify's local Blobs server (no network, no real photos)
 ```
 
 `npm run serve` runs the same API against a local folder instead of Blobs, and applies `public/_headers`, so the security headers match production. `.data/` is git-ignored.
 
 ## Expected monthly cost
+
+What can create ongoing charges, and what's in place:
+
+| Risk | Mitigation |
+|---|---|
+| Photo bandwidth (the largest cost) | Browser-made WebP in three sizes with `srcset`; public photo URLs are immutable and cached for a year at Netlify's edge (`durable`) and in browsers. |
+| Function runs from visitors | `/api/content` and photos are served from the CDN cache; the function runs about once per edge location after each publish. Random query strings (`?x=1`) can't bypass the cache (`Netlify-Vary: query=v`). |
+| Storage growth | Unused photo files are deleted on publish; history keeps 20 versions; expired sessions and old sign-in records are tidied on each sign-in. The preview test copy keeps whatever you upload while testing (small); delete it with `npx netlify blobs:delete preview-rps-media <key>` if needed. |
+| Production deploys (15 credits each) | Owner edits never deploy. Only code changes merged to `main` do. Deploy Previews don't use production-deploy credits. |
+| Running out of credits | On the Free plan Netlify pauses the site's usage rather than billing. On paid plans, check **Auto recharge** and usage alerts in the team's billing settings so extra credits aren't bought without you knowing. |
+| Bots requesting missing URLs under `/api` or `/media` | Each one is a short function run (2 credits per 10,000 requests). Not cacheable; if it ever becomes noticeable, add a Netlify firewall/rate-limit rule. |
+
 
 Netlify bills in credits: Free is 300 credits/month, Personal $9 for 1,000, Pro $20 for 3,000+. Bandwidth is 20 credits/GB, functions 10 credits/GB-hour, requests 2 credits per 10k, and production deploys 15 credits each ([netlify.com/pricing](https://netlify.com/pricing)).
 

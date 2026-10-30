@@ -54,10 +54,46 @@ export default function App() {
       .catch((e) => setAuth({ state: 'out', error: e.message }))
   }, [])
 
-  if (auth.state === 'checking') return <div className="a-splash"><BrushMark size={56} /></div>
-  if (auth.state === 'out') return <Login expired={auth.expired} initialError={auth.error} onIn={(must) => setAuth({ state: must ? 'change' : 'in' })} />
-  if (auth.state === 'change') return <ChoosePassword onDone={() => (toast('Password saved. Welcome!'), setAuth({ state: 'in' }))} />
-  return <Dashboard onSignOut={() => setAuth({ state: 'out' })} />
+  let screen
+  if (auth.state === 'checking') screen = <div className="a-splash"><BrushMark size={56} /></div>
+  else if (auth.state === 'out') screen = <Login expired={auth.expired} initialError={auth.error} onIn={(must) => setAuth({ state: must ? 'change' : 'in' })} />
+  else if (auth.state === 'change') screen = <ChoosePassword onDone={() => (toast('Password saved. Welcome!'), setAuth({ state: 'in' }))} />
+  else screen = <Dashboard onSignOut={() => setAuth({ state: 'out' })} />
+  return (
+    <>
+      <TestCopyBanner />
+      {screen}
+    </>
+  )
+}
+
+/** On Deploy Previews the dashboard works on a separate test copy — say so plainly. */
+function TestCopyBanner() {
+  const [env, setEnv] = useState('')
+  const ref = useRef(null)
+  // Sticky headers and the sidebar sit below the notice (see --a-banner in admin.css).
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const root = document.documentElement
+    const set = () => root.style.setProperty('--a-banner', `${el.offsetHeight}px`)
+    set()
+    const ro = new ResizeObserver(set)
+    ro.observe(el)
+    return () => (ro.disconnect(), root.style.removeProperty('--a-banner'))
+  }, [env])
+  useEffect(() => {
+    fetch('/api/health', { credentials: 'same-origin' })
+      .then((r) => (r.ok ? r.json() : {}))
+      .then((h) => setEnv(h.dataEnv || ''))
+      .catch(() => {})
+  }, [])
+  if (env !== 'preview') return null
+  return (
+    <div className="a-testcopy" role="status" ref={ref}>
+      <strong>Test copy.</strong> This is a preview of the website manager. Changes here don’t affect your live website, and it has its own password.
+    </div>
+  )
 }
 
 function Dashboard({ onSignOut }) {

@@ -10,7 +10,8 @@ import { fileStores } from './stores.mjs'
 const dist = path.resolve(process.argv[2] || 'dist')
 const port = Number(process.argv[3] || 8888)
 const data = path.resolve(process.argv[4] || '.data')
-const app = createApp({ stores: fileStores(data), env: process.env })
+// RPS_DATA_ENV=preview shows the dashboard exactly as it looks on a Deploy Preview.
+const app = createApp({ stores: fileStores(data), env: process.env, dataEnv: process.env.RPS_DATA_ENV || 'local' })
 
 // Apply public/_headers like Netlify does, so local testing runs under the real security headers.
 const rules = []

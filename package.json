@@ -9,7 +9,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "serve": "node server/dev-server.mjs dist 8888 .data",
-    "test": "node --test server/tests/api.test.mjs"
+    "test": "node --test server/tests/api.test.mjs server/tests/netlify-function.test.mjs",
+    "smoke": "node scripts/smoke-test.mjs"
   },
   "dependencies": {
     "react": "^19.1.0",

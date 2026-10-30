@@ -536,3 +536,22 @@ body.admin.a-noscroll { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   .admin *, .admin *::before, .admin *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* Deploy Preview notice (separate test data) */
+.a-testcopy {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  padding: 0.5rem 1rem;
+  background: #fde68a;
+  color: #3b2a00;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  text-align: center;
+  border-bottom: 1px solid #e6c34a;
+}
+/* Keep sticky bars below the notice when it's shown (--a-banner is set by the dashboard). */
+.a-top { top: var(--a-banner, 0px); }
+.a-side { top: var(--a-banner, 0px); height: calc(100svh - var(--a-banner, 0px)); }
+.a-pubbar { top: calc(3.4rem + var(--a-banner, 0px)); }
+@media (min-width: 900px) { .a-pubbar { top: calc(0.75rem + var(--a-banner, 0px)); } }

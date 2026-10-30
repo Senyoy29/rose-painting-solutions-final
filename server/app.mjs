@@ -52,7 +52,7 @@ async function readJson(req) {
   }
 }
 
-export function createApp({ stores, env = {}, now = () => Date.now(), purgeContentCache = async () => {} }) {
+export function createApp({ stores, env = {}, now = () => Date.now(), purgeContentCache = async () => {}, dataEnv = 'local', contentCacheTag = 'rps-content' }) {
   const auth = createAuth({ store: stores.auth, env, now })
   const seed = buildSeed()
   const SEED = sanitizeDoc(seed, seed)
@@ -134,7 +134,11 @@ export function createApp({ stores, env = {}, now = () => Date.now(), purgeConte
         // fast responses without waiting for the function, and changes still go live at once.
         'Cache-Control': 'public, max-age=0, must-revalidate',
         'Netlify-CDN-Cache-Control': 'public, durable, s-maxage=300, stale-while-revalidate=604800',
-        'Netlify-Cache-Tag': 'rps-content',
+        'Netlify-Cache-Tag': contentCacheTag,
+        // The content never depends on the query string. Naming one unused parameter
+        // makes every other query string share a single cache entry, so random
+        // "?x=123" requests can't bypass the CDN and run the function each time.
+        'Netlify-Vary': 'query=v',
         ...baseHeaders,
       },
     })
@@ -158,7 +162,12 @@ export function createApp({ stores, env = {}, now = () => Date.now(), purgeConte
       'Content-Disposition': 'inline',
       ...baseHeaders,
       ...(isPublic
-        ? { 'Cache-Control': 'public, max-age=31536000, immutable' }
+        ? {
+            'Cache-Control': 'public, max-age=31536000, immutable',
+            // Keep served photos at Netlify's edge so repeat views don't run the function.
+            'Netlify-CDN-Cache-Control': 'public, durable, max-age=31536000, immutable',
+            'Netlify-Vary': 'query=v',
+          }
         : { 'Cache-Control': 'private, no-store', 'X-Robots-Tag': 'noindex' }),
     }
     if (req.headers.get('if-none-match') === etag) return new Response(null, { status: 304, headers })
@@ -335,7 +344,7 @@ export function createApp({ stores, env = {}, now = () => Date.now(), purgeConte
       const url = new URL(req.url)
       const p = url.pathname.replace(/\/+$/, '')
       if (p === '/api/content' && req.method === 'GET') return await getContent()
-      if (p === '/api/health') return json(200, { ok: true, dashboard: auth.configured })
+      if (p === '/api/health') return json(200, { ok: true, dashboard: auth.configured, dataEnv })
       if (p.startsWith('/media/') && (req.method === 'GET' || req.method === 'HEAD')) return await getMedia(req, p.slice(7).split('/'))
       if (p.startsWith('/api/admin/')) return await admin(req, p.slice('/api/admin/'.length), ip)
       return err(404, 'Not found')

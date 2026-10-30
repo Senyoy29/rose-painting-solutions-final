@@ -13,7 +13,7 @@
 import { api, uploadBytes } from './api.js'
 
 export const MAX_INPUT_BYTES = 40 * 1024 * 1024
-const SIZES = { master: { edge: 3200, q: 0.9, max: 5_600_000 }, lg: { edge: 2000, q: 0.84, max: 2_900_000 }, md: { edge: 1000, q: 0.8, max: 1_150_000 }, thumb: { edge: 480, q: 0.74, max: 280_000 } }
+const SIZES = { master: { edge: 3200, q: 0.9, max: 4_200_000 }, lg: { edge: 2000, q: 0.84, max: 2_900_000 }, md: { edge: 1000, q: 0.8, max: 1_150_000 }, thumb: { edge: 480, q: 0.74, max: 280_000 } }
 
 /** Sniff the first bytes so renamed or non-image files are refused early. */
 async function looksLikeImage(file) {
